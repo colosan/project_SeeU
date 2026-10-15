@@ -1,0 +1,20 @@
+# Godot 4
+.godot/
+/android/
+*.translation
+export.cfg
+export_credentials.cfg
+*.tmp
+
+# Build output
+/build/
+/export/
+
+# Original reference art (official illustrations / design sheets) — never commit
+/reference/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
