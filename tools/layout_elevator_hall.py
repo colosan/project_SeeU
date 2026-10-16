@@ -13,12 +13,18 @@ Room story (native px; environment drawn at 1/3 and shown at 3x):
   * The route is worn into the concrete (lighter, cleaner) and the flatbed cart's wheel tracks run
     from the entrance into the elevator. Lamps on the corridor wall lead the eye from the doorway
     to the elevator, each one a step closer.
+
+Lighting (scripts/world/pixel_lighting.gd, one PixelLight per visible source, LIGHTS below): two warm
+wall lamps along the corridor, then the elevator's caged bulb high in the shaft frame - the brightest
+light, the goal - and the cyan pulse of the call button beside the gate.
 """
 import ast
 import math
 import os
 
 from PIL import Image
+
+import pixel_lights
 
 
 def _floor_consts(names):
@@ -80,13 +86,21 @@ PLAN = [
      "flatbed cart with a crate, parked on the open floor south of the elevator, out of the walkway", {}),
 ]
 
-# name, x, y (native), texture scale, colour, energy, source (PLAN file), reason, flicker pattern (or None)
+AMBIENT = (0.35, 0.37, 0.46)                            # same dim cool base as the junkyard (still underground)
+WARM, CYAN = (1.0, 0.84, 0.60), (0.40, 0.92, 0.95)
+# Native px. Each light sits on the centre of its source prop's glowing pixels (the .emit.png mask);
+# wall-hung sources get their floor point 2 px in front of the wall base (tools/pixel_lights.py).
 LIGHTS = [
-    ("EntryLamp", 44, 102, 3.0, "1, 0.86, 0.62", 0.8, "wall_lamp", "pool of light inside the doorway", None),
-    ("FlickerLamp", 150, 106, 3.0, "1, 0.86, 0.62", 0.8, "a_lamp", "halfway light; flickers with its bulb",
-     [1, 1, 1, 1, 0.45, 1, 0, 1]),
-    ("ElevatorLamp", 252, 80, 4.2, "1, 0.9, 0.72", 1.25, "elevator", "caged bulb in the shaft frame: the brightest spot, the goal", None),
-    ("CallGlow", 296, 56, 0.7, "0.4, 0.9, 0.95", 0.8, "a_call", "glow of the call button", None),
+    dict(name="EntryLamp", type="point", src="wall_lamp", color=WARM, energy=2.0, radius=96, halo=0.55, halo_r=5,
+         why="first wall lamp right inside the doorway: a warm pool to walk into out of the junkyard"),
+    dict(name="FlickerLamp", type="point", src="a_lamp", color=WARM, energy=2.0, radius=96, halo=0.55, halo_r=5,
+         flicker=[1, 1, 1, 1, 0.45, 1, 0, 1],
+         why="halfway lamp with an old bulb: the light flickers in step with the bulb's frames"),
+    dict(name="ElevatorBulb", type="point", src="elevator", color=(1.0, 0.88, 0.68), energy=2.6, radius=170,
+         halo=0.6, halo_r=8,
+         why="caged bulb high in the shaft frame: the brightest light in the hall, it pours down over the gate - the goal"),
+    dict(name="CallGlow", type="point", src="a_call", color=CYAN, energy=1.4, radius=30, halo=0.45, halo_r=4,
+         flicker=[1, 1, 0.75, 0.5, 0.25, 0.5], why="the call button pulses cyan: the car is waiting"),
 ]
 
 SPAWNS = [  # name, x, y (native), facing, reason
@@ -133,6 +147,28 @@ def collider(folder, name, x, y, extra):
     return (x - cw / 2, y - ch, x + cw / 2, y)
 
 
+def wall_base(folder, name, x, y, extra):
+    """Floor row under the wall face a wall-hung prop is on (its lighting heights count from there)."""
+    w, h = sprite_size(folder, name, extra)
+    left = round(x - w / 2)
+    for wx0, wy0, wx1, wy1 in (CORRIDOR_WALL, ALCOVE_WALL):
+        if wx0 <= left and left + w - 1 <= wx1 and wy0 <= y - h and y - 1 <= wy1:
+            return wy1 + 1
+    return y
+
+
+def light_props():
+    """PLAN entries usable as light sources, keyed by their (unique) file name; native px."""
+    props = {}
+    for i, (folder, name, x, y, kind, why, extra) in enumerate(PLAN):
+        w, h = sprite_size(folder, name, extra)
+        left = round(x - w / 2)
+        props[name] = dict(png=f"assets/env/{folder}/{name}.png", frames=extra.get("frames", 1), fps=extra.get("fps", 8),
+                           left=left, top=y - h, base_y=y, node=f"{name}_{i}",
+                           wall_base=wall_base(folder, name, x, y, extra) if kind == "wall" else None)
+    return props
+
+
 def check():
     problems = []
     pts = walk_samples()
@@ -169,10 +205,7 @@ def check():
             ex, ey = PATH[-1]
             if not (x0 <= ex <= x1 and ey - y1 <= 6):
                 problems.append(f"{name}: the walkway does not end at it")
-    names = {n for _f, n, *_ in PLAN}
-    for light in LIGHTS:
-        if light[6] not in names:
-            problems.append(f"light {light[0]}: no visible source ({light[6]})")
+    problems += pixel_lights.check(LIGHTS, light_props(), {})
     for name, sx, sy, _face, _why in SPAWNS:
         if not any(math.dist((sx, sy), q) <= HALF for q in pts):
             problems.append(f"spawn {name}: not on the walkway")
@@ -189,16 +222,14 @@ def write_scene():
          '[ext_resource type="Texture2D" path="res://assets/env/elevator/hall_floor.png" id="floor"]',
          '[ext_resource type="Script" path="res://scripts/world/pixel_prop.gd" id="prop_s"]',
          '[ext_resource type="Script" path="res://scripts/world/exit_zone.gd" id="exit_s"]',
-         '[ext_resource type="Script" path="res://scripts/world/flicker_light.gd" id="flicker_s"]',
+         '[ext_resource type="Script" path="res://scripts/world/pixel_lighting.gd" id="lighting_s"]',
+         '[ext_resource type="Script" path="res://scripts/world/pixel_light.gd" id="light_s"]',
          '[ext_resource type="PackedScene" path="res://scenes/characters/player.tscn" id="player"]']
     L += [f'[ext_resource type="Texture2D" path="res://assets/env/{f}/{n}.png" id="{n}"]' for f, n in files]
-    L += ["", '[sub_resource type="Gradient" id="steps"]', "interpolation_mode = 1",
-          "offsets = PackedFloat32Array(0, 0.3, 0.55, 0.78, 0.95)",
-          "colors = PackedColorArray(1, 1, 1, 1, 0.82, 0.82, 0.82, 1, 0.62, 0.62, 0.62, 1, 0.38, 0.38, 0.38, 1, 0, 0, 0, 1)", "",
-          '[sub_resource type="GradientTexture2D" id="lightTex"]', 'gradient = SubResource("steps")', "width = 128", "height = 128",
-          "fill = 1", "fill_from = Vector2(0.5, 0.5)", "fill_to = Vector2(1, 0.5)", "",
-          '[node name="ElevatorHall" type="Node2D"]', "y_sort_enabled = true", "",
-          '[node name="Dark" type="CanvasModulate" parent="."]', "color = Color(0.36, 0.37, 0.44, 1)", ""]
+    L += ["", '[node name="ElevatorHall" type="Node2D"]', "y_sort_enabled = true", "",
+          "; 2.5D pixel lighting for this map (height buffer + light pass + composite)",
+          '[node name="Lighting" type="Node" parent="."]', 'script = ExtResource("lighting_s")',
+          f"ambient = Color({AMBIENT[0]}, {AMBIENT[1]}, {AMBIENT[2]}, 1)", ""]
     walls = ", ".join(f"Rect2({x}, {y}, {w}, {h})" for x, y, w, h in WALLS)
     L += ['[node name="Room" type="Sprite2D" parent="."]', "z_index = -10", 'texture = ExtResource("floor")',
           'script = ExtResource("room_s")', f"walls = Array[Rect2]([{walls}])", ""]
@@ -208,19 +239,14 @@ def write_scene():
               'script = ExtResource("prop_s")', f'texture = ExtResource("{name}")']
         if kind in ("wall", "decal"):
             L.append("solid = false")
+        if kind == "wall":                                    # lighting: heights count from the wall's base
+            L.append(f"height_offset = {wall_base(folder, name, x, y, extra) - y}")
         if "solid_fraction" in extra:
             L.append(f"solid_fraction = {extra['solid_fraction']}")
         if "frames" in extra:
             L += [f"frames = {extra['frames']}", f"fps = {float(extra['fps'])}"]
         L.append("")
-    for n, x, y, s, c, e, _src, why, pattern in LIGHTS:
-        L += [f"; {why}", f'[node name="{n}" type="PointLight2D" parent="."]', f"position = Vector2({x * S}, {y * S})",
-              f"color = Color({c}, 1)", f"energy = {e}", 'texture = SubResource("lightTex")', f"texture_scale = {s}"]
-        if pattern:
-            fps = next(ex["fps"] for _f, nm, *_r, ex in PLAN if nm == _src)
-            L += ['script = ExtResource("flicker_s")',
-                  f"pattern = PackedFloat32Array({', '.join(str(float(v)) for v in pattern)})", f"fps = {float(fps)}"]
-        L.append("")
+    L += pixel_lights.scene_lines(LIGHTS, light_props(), {})
     for name, (x, y, w, h), target, spawn in EXITS:
         L += [f"; back to {target.rsplit('/', 1)[-1]}", f'[node name="{name}" type="Area2D" parent="."]',
               f"position = Vector2({(x + w / 2) * S:g}, {(y + h / 2) * S:g})", 'script = ExtResource("exit_s")',

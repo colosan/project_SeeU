@@ -35,6 +35,7 @@
 | 파일 | 출처 | 비고 |
 |---|---|---|
 | `assets/env/basement/code/*.png` | 직접 그림: `tools/art/gen_junk.py` (그리기 키트 `tools/art/pix.py`) | AI 미사용. 재질 램프 색만 사용, 정면 3/4 시점, 외곽선은 실루엣에 한 번. `a_*.png`는 프레임을 가로로 붙인 애니메이션 |
+| `assets/env/basement/code/s_worklamp.png` | 직접 그림, AI 미사용: `tools/art/gen_junk.py`(`work_lamp` 부품) | 삼각대 작업등. 지하 통로 조명의 원천 |
 | `assets/env/basement/organic/org_*.png` | PixelLab create_map_object로 형태만 생성 → `tools/art/import_pixellab.py`로 우리 램프 색 재매핑, 잡점 정리, 외곽선 | 원본 id는 `import_pixellab.py`의 `SOURCES`에 기록 (`e4317f37…`, `5a3c7f4b…`, `c6b111a2…`, `b4d0d864…`, `bd0a4172…`, `69afa5f4…`) |
 
 ## 엘리베이터 홀 (저장소에 포함)
@@ -51,6 +52,16 @@
 | `assets/env/elevator/notice.png`, `cart.png`, `stool.png` | 직접 그림, AI 미사용: `tools/art/gen_elevator.py` (수레 위 상자는 `gen_junk.crate` 부품) | 게시판, 평판 수레, 운전수 의자 |
 
 복도 가장자리 고물(`c_small1/2/3`)은 지하 방의 `assets/env/basement/code/` 파일을 그대로 다시 씁니다.
+
+## 조명용 파생 텍스처 (저장소에 포함)
+
+그림이 아니라 조명 계산용 데이터입니다. 모두 우리 도구가 원본 그림·생성기 숫자에서 만들며 AI 미사용.
+
+| 파일 | 출처 | 비고 |
+|---|---|---|
+| `assets/env/**/<이름>.emit.png` | `tools/art/gen_emission.py`가 같은 이름의 그림에서 생성 | 발광 마스크(회색조, 255 = 스스로 빛남). 발광 픽셀이 있는 그림만 |
+| `assets/env/basement/room_floor.height.png` | `tools/gen_basement_floor.py` | 방 높이·표면 종류 지도(R 높이, B 종류, A 덮임) |
+| `assets/env/elevator/hall_floor.height.png` | `tools/gen_elevator_hall_floor.py` | 같음 |
 
 ## 타일셋
 

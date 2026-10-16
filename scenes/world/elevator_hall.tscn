@@ -4,7 +4,8 @@
 [ext_resource type="Texture2D" path="res://assets/env/elevator/hall_floor.png" id="floor"]
 [ext_resource type="Script" path="res://scripts/world/pixel_prop.gd" id="prop_s"]
 [ext_resource type="Script" path="res://scripts/world/exit_zone.gd" id="exit_s"]
-[ext_resource type="Script" path="res://scripts/world/flicker_light.gd" id="flicker_s"]
+[ext_resource type="Script" path="res://scripts/world/pixel_lighting.gd" id="lighting_s"]
+[ext_resource type="Script" path="res://scripts/world/pixel_light.gd" id="light_s"]
 [ext_resource type="PackedScene" path="res://scenes/characters/player.tscn" id="player"]
 [ext_resource type="Texture2D" path="res://assets/env/elevator/elevator.png" id="elevator"]
 [ext_resource type="Texture2D" path="res://assets/env/elevator/a_call.png" id="a_call"]
@@ -20,24 +21,13 @@
 [ext_resource type="Texture2D" path="res://assets/env/basement/code/c_small2.png" id="c_small2"]
 [ext_resource type="Texture2D" path="res://assets/env/elevator/cart.png" id="cart"]
 
-[sub_resource type="Gradient" id="steps"]
-interpolation_mode = 1
-offsets = PackedFloat32Array(0, 0.3, 0.55, 0.78, 0.95)
-colors = PackedColorArray(1, 1, 1, 1, 0.82, 0.82, 0.82, 1, 0.62, 0.62, 0.62, 1, 0.38, 0.38, 0.38, 1, 0, 0, 0, 1)
-
-[sub_resource type="GradientTexture2D" id="lightTex"]
-gradient = SubResource("steps")
-width = 128
-height = 128
-fill = 1
-fill_from = Vector2(0.5, 0.5)
-fill_to = Vector2(1, 0.5)
-
 [node name="ElevatorHall" type="Node2D"]
 y_sort_enabled = true
 
-[node name="Dark" type="CanvasModulate" parent="."]
-color = Color(0.36, 0.37, 0.44, 1)
+; 2.5D pixel lighting for this map (height buffer + light pass + composite)
+[node name="Lighting" type="Node" parent="."]
+script = ExtResource("lighting_s")
+ambient = Color(0.35, 0.37, 0.46, 1)
 
 [node name="Room" type="Sprite2D" parent="."]
 z_index = -10
@@ -58,6 +48,7 @@ position = Vector2(888, 195)
 script = ExtResource("prop_s")
 texture = ExtResource("a_call")
 solid = false
+height_offset = 23
 frames = 6
 fps = 4.0
 
@@ -73,6 +64,7 @@ position = Vector2(132, 234)
 script = ExtResource("prop_s")
 texture = ExtResource("wall_lamp")
 solid = false
+height_offset = 34
 
 ; second lamp halfway down the corridor, an old bulb that flickers
 [node name="a_lamp_4" type="StaticBody2D" parent="."]
@@ -80,6 +72,7 @@ position = Vector2(450, 234)
 script = ExtResource("prop_s")
 texture = ExtResource("a_lamp")
 solid = false
+height_offset = 34
 frames = 8
 fps = 8.0
 
@@ -89,6 +82,7 @@ position = Vector2(276, 258)
 script = ExtResource("prop_s")
 texture = ExtResource("notice")
 solid = false
+height_offset = 26
 
 ; drum set right under the leaking pipe joint (x 119) to catch the drips
 [node name="drum_6" type="StaticBody2D" parent="."]
@@ -102,6 +96,7 @@ position = Vector2(357, 303)
 script = ExtResource("prop_s")
 texture = ExtResource("a_drip")
 solid = false
+height_offset = 11
 frames = 10
 fps = 10.0
 
@@ -136,40 +131,59 @@ position = Vector2(786, 618)
 script = ExtResource("prop_s")
 texture = ExtResource("cart")
 
-; pool of light inside the doorway
-[node name="EntryLamp" type="PointLight2D" parent="."]
-position = Vector2(132, 306)
-color = Color(1, 0.86, 0.62, 1)
-energy = 0.8
-texture = SubResource("lightTex")
-texture_scale = 3.0
+; first wall lamp right inside the doorway: a warm pool to walk into out of the junkyard
+[node name="EntryLamp" type="Node2D" parent="."]
+position = Vector2(132, 342)
+script = ExtResource("light_s")
+type = 0
+color = Color(1, 0.84, 0.6, 1)
+energy = 2.0
+height = 40.5
+radius = 96
+halo = 0.55
+halo_radius = 5
 
-; halfway light; flickers with its bulb
-[node name="FlickerLamp" type="PointLight2D" parent="."]
-position = Vector2(450, 318)
-color = Color(1, 0.86, 0.62, 1)
-energy = 0.8
-texture = SubResource("lightTex")
-texture_scale = 3.0
-script = ExtResource("flicker_s")
-pattern = PackedFloat32Array(1.0, 1.0, 1.0, 1.0, 0.45, 1.0, 0.0, 1.0)
-fps = 8.0
+; halfway lamp with an old bulb: the light flickers in step with the bulb's frames
+[node name="FlickerLamp" type="Node2D" parent="."]
+position = Vector2(450, 342)
+script = ExtResource("light_s")
+type = 0
+color = Color(1, 0.84, 0.6, 1)
+energy = 2.0
+height = 40.5
+radius = 96
+halo = 0.55
+halo_radius = 5
+flicker = PackedFloat32Array(1, 1, 1, 1, 0.45, 1, 0, 1)
+flicker_fps = 8
+sync_prop = NodePath("../a_lamp_4")
 
-; caged bulb in the shaft frame: the brightest spot, the goal
-[node name="ElevatorLamp" type="PointLight2D" parent="."]
-position = Vector2(756, 240)
-color = Color(1, 0.9, 0.72, 1)
-energy = 1.25
-texture = SubResource("lightTex")
-texture_scale = 4.2
+; caged bulb high in the shaft frame: the brightest light in the hall, it pours down over the gate - the goal
+[node name="ElevatorBulb" type="Node2D" parent="."]
+position = Vector2(756, 282)
+script = ExtResource("light_s")
+type = 0
+color = Color(1, 0.88, 0.68, 1)
+energy = 2.6
+height = 85.1
+radius = 170
+halo = 0.6
+halo_radius = 8
 
-; glow of the call button
-[node name="CallGlow" type="PointLight2D" parent="."]
-position = Vector2(888, 168)
-color = Color(0.4, 0.9, 0.95, 1)
-energy = 0.8
-texture = SubResource("lightTex")
-texture_scale = 0.7
+; the call button pulses cyan: the car is waiting
+[node name="CallGlow" type="Node2D" parent="."]
+position = Vector2(888, 270)
+script = ExtResource("light_s")
+type = 0
+color = Color(0.4, 0.92, 0.95, 1)
+energy = 1.4
+height = 34.5
+radius = 30
+halo = 0.45
+halo_radius = 4
+flicker = PackedFloat32Array(1, 1, 0.75, 0.5, 0.25, 0.5)
+flicker_fps = 4
+sync_prop = NodePath("../a_call_1")
 
 ; back to basement_test.tscn
 [node name="ToBasement" type="Area2D" parent="."]

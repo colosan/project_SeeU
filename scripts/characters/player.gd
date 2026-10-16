@@ -7,6 +7,7 @@ extends CharacterBody2D
 
 var facing := "south"
 var _last_axis := Vector2.ZERO
+var _twin: AnimatedSprite2D           # same frames on the lighting height layer (see PixelLighting)
 
 @onready var sprite: AnimatedSprite2D = $Sprite
 @onready var camera: Camera2D = $Camera
@@ -17,7 +18,34 @@ func _ready() -> void:
 	_ensure_input_actions()
 	sprite.sprite_frames = CharacterFrames.build(sprite_dir)
 	sprite.play("idle_" + facing)
+	if PixelLighting.active_for(self):
+		_add_light_twin()
 	_apply_camera_limits.call_deferred()
+
+
+## Her sprite is 1:1 screen px, so heights are (feet line - y) / 3 native px.
+func _add_light_twin() -> void:
+	_twin = AnimatedSprite2D.new()
+	_twin.name = "LightTwin"
+	_twin.sprite_frames = sprite.sprite_frames
+	_twin.offset = sprite.offset
+	_twin.centered = sprite.centered
+	_twin.material = PixelLighting.height_material({
+		"base_y": 0.0, "units_per_native": float(PixelLighting.SCALE), "kind": PixelLighting.KIND_CHARACTER})
+	PixelLighting.add_twin(self, _twin)
+	# Sync in _process AFTER the sprite advanced its frame (higher priority value = later): a sprite's
+	# redraw is deferred, so a change made any later (e.g. right before drawing) would show a frame late.
+	process_priority = 100
+	_process(0.0)
+
+
+func _process(_delta: float) -> void:
+	if _twin == null:
+		return
+	if _twin.animation != sprite.animation:
+		_twin.animation = sprite.animation
+	_twin.frame = sprite.frame
+	_twin.flip_h = sprite.flip_h
 
 
 ## Turn to "north" / "south" / "east" / "west" without moving (e.g. after arriving through a door).

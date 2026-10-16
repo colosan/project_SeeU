@@ -13,10 +13,16 @@ const ENV_SCALE := 3
 ]
 
 
+var _size := Vector2.ZERO
+
+
 func _ready() -> void:
 	add_to_group("map_bounds")
 	centered = false
 	scale = Vector2(ENV_SCALE, ENV_SCALE)
+	_size = texture.get_size()
+	if PixelLighting.active_for(self):
+		_split_for_lighting()
 	var body := StaticBody2D.new()
 	add_child(body)
 	for r in walls:
@@ -28,5 +34,27 @@ func _ready() -> void:
 		body.add_child(col)
 
 
+## Lit maps: the room becomes a container holding the art (layer 1) and its height twin (layer 2),
+## which shows the baked <name>.height.png companion written by the floor generator.
+func _split_for_lighting() -> void:
+	var art := texture
+	var data_path := art.resource_path.get_basename() + ".height.png"
+	if not ResourceLoader.exists(data_path):
+		push_warning("pixel_room: no height map %s, the room stays unlit" % data_path)
+		return
+	texture = null
+	var albedo := Sprite2D.new()
+	albedo.name = "Art"
+	albedo.texture = art
+	albedo.centered = false
+	add_child(albedo)
+	var twin := Sprite2D.new()
+	twin.name = "LightTwin"
+	twin.texture = load(data_path)
+	twin.centered = false
+	twin.material = PixelLighting.height_material({"use_data": true, "emit": PixelLighting.emission_for(art)})
+	PixelLighting.add_twin(self, twin)
+
+
 func get_world_rect() -> Rect2:
-	return Rect2(global_position, texture.get_size() * ENV_SCALE)
+	return Rect2(global_position, _size * ENV_SCALE)

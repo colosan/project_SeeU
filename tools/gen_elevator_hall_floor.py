@@ -17,7 +17,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "art"))
-from pix import Pix  # noqa: E402
+from pix import KIND_CAP, KIND_FACE, KIND_FLOOR, Pix, save_height_map  # noqa: E402
 
 W, H = 320, 240
 ENTRANCE = (0, 120, 13, 175)              # opening in the left wall (x0, y0, x1, y1)
@@ -157,7 +157,22 @@ def draw():
     return p
 
 
+WALL_H = CORRIDOR_WALL[3] + 1 - CORRIDOR_WALL[1]       # 64 px (~2.9 m): both back wall faces are this tall
+
+
+def height_cell(x, y):
+    """Height/normal companion for the lighting pass: same geometry as draw()."""
+    if is_floor(x, y):
+        return 0, KIND_FLOOR
+    for (x0, y0, x1, y1) in (CORRIDOR_WALL, ALCOVE_WALL):
+        if x0 <= x <= x1 and y0 <= y <= y1:
+            return y1 + 1 - y, KIND_FACE                 # back wall face: height above its base (pipes, conduit included)
+    return WALL_H, KIND_CAP                              # wall tops, side/front wall bands, door jambs: never lit directly
+
+
 if __name__ == "__main__":
     os.makedirs("assets/env/elevator", exist_ok=True)
     draw().image().save("assets/env/elevator/hall_floor.png")
     print("saved assets/env/elevator/hall_floor.png")
+    save_height_map("assets/env/elevator/hall_floor.height.png", W, H, height_cell)
+    print("saved assets/env/elevator/hall_floor.height.png")

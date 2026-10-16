@@ -241,6 +241,31 @@ def tank(p, x, y, r):
     return (x, y - h - 1, x + w - 1, y), w
 
 
+def _line(p, x0, y0, x1, y1, mat, step):
+    n = max(abs(x1 - x0), abs(y1 - y0), 1)
+    for t in range(n + 1):
+        p.put(round(x0 + (x1 - x0) * t / n), round(y0 + (y1 - y0) * t / n), mat, step)
+
+
+def work_lamp(p, x, y, r):
+    """Caged work bulb on a tripod stand, set up by whoever cleared the walkway. The bulb centre
+    sits ~32 px (~1.4 m) above the sprite's bottom row; the layout puts the light on its glowing pixels."""
+    cx = x + 5
+    hub = y - 7
+    _line(p, cx, hub, x + 1, y, "steel", 2); _line(p, cx + 1, hub, x + 10, y, "steel", 2)    # splayed front legs
+    _line(p, cx + 1, hub, cx + 2, y - 2, "steel", 1)                                         # back leg, going away
+    p.put(x + 1, y, "rubber", 1); p.put(x + 10, y, "rubber", 1)                              # rubber feet
+    p.vline(cx, y - 26, hub, "steel", 3); p.vline(cx + 1, y - 26, hub, "steel", 2)          # pole
+    p.rect(cx - 1, hub - 1, cx + 2, hub, "steel", 2); p.hline(cx - 1, cx + 2, hub - 1, "steel", 3)   # clamp
+    p.ellipse(cx + 0.5, y - 30, 2.3, 2.8, "shell", 4)                                        # the bulb
+    p.put(cx, y - 30, "warn", 4); p.put(cx + 1, y - 29, "warn", 4)                           # filament
+    for gx in (cx - 2, cx + 3):                                                              # cage
+        p.vline(gx, y - 34, y - 27, "steel", 2)
+    p.hline(cx - 2, cx + 3, y - 34, "steel", 3); p.hline(cx - 1, cx + 2, y - 35, "steel", 2)
+    p.rect(cx - 1, y - 27, cx + 2, y - 26, "steel", 2)                                       # lamp holder
+    return (x, y - 35, x + 10, y), 11
+
+
 PARTS = {"tire": tire, "pipes": pipes, "fan": fan, "chair": chair, "ladder": ladder, "plate": plate, "tank": tank,
          "crate": crate, "amp": amp, "rack": rack, "tv": tv, "bag": bag, "speaker": speaker,
          "mic": mic_stand, "synth": synth, "monitor": monitor, "spot": spotlight, "truss": truss,
@@ -495,7 +520,7 @@ EDGES = {f"e_{i}.png": (900 + i, r_w, r_pk, r_n) for i, (r_w, r_pk, r_n) in enum
      (104, 26, 16), (88, 22, 14), (96, 30, 16), (80, 20, 12)])}
 DECALS = {f"d_{i}.png": 950 + i for i in range(6)}
 
-SINGLES = {"s_mic.png": (mic_stand, 1), "s_rhead.png": (robot_head, 2), "s_barrel.png": (barrel, 3),
+SINGLES = {"s_worklamp.png": (work_lamp, 7), "s_mic.png": (mic_stand, 1), "s_rhead.png": (robot_head, 2), "s_barrel.png": (barrel, 3),
            "s_tv.png": (tv, 4), "s_spot.png": (spotlight, 5), "s_speaker.png": (speaker, 6)}
 
 TARGETS = {

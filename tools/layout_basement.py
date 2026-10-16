@@ -12,13 +12,19 @@ Room story (screen px, environment drawn at 1/3 and shown at 3x):
     servers back-right, stage leftovers and overflow along the front.
   * The exit on the right leads to the elevator hall (ExitZone -> elevator_hall.tscn).
   * A severed power line from the server racks sparks; the TVs it still feeds flicker;
-    a ventilation fan turns in the exit corridor. Work lamps follow the walkway.
+    a ventilation fan turns in the exit corridor. Work lamps on tripods follow the walkway.
+
+Lighting (scripts/world/pixel_lighting.gd, one PixelLight per visible source, LIGHTS below):
+  the chute beam lands on the rug (start), warm work lamps light the walkway, the elevator hall's
+  light spills in through the exit (the goal), cyan screens/LEDs and the sparks are small accents.
 """
 import ast
 import math
 import os
 
 from PIL import Image
+
+import pixel_lights
 
 
 def _floor_consts(names):
@@ -78,19 +84,45 @@ PLAN = [
     (C, "a_spark", 612, 456, "severed power line from the racks, sparking at the walkway edge", {"frames": 8, "fps": 10}),
     (C, "a_tv", 268, 470, "TV on the same line, flickering", {"frames": 6, "fps": 6}),
     (C, "a_fan", 888, 625, "ventilation fan by the exit corridor", {"frames": 4, "fps": 12}),
-    # 4. walkable floor details
+    # 4. work lamps: whoever bulldozed the walkway set up caged bulbs on tripods along its north edge
+    (C, "s_worklamp", 669, 459, "work lamp at the walkway's first stretch, next to the sparking line it was plugged into",
+     {"id": "lamp_a"}),
+    (C, "s_worklamp", 792, 408, "work lamp on the last stretch before the exit, in front of the server corner", {"id": "lamp_b"}),
+    # 5. walkable floor details
     (C, "f_puddle1", 200, 520, "oil leaking from the storage junk by the left wall", {"solid": False}),
     (C, "f_plate1", 300, 520, "loose plate kicked off the walkway", {"solid": False}),
 ]
-LIGHTS = [  # name, x, y, scale, color, energy, reason
-    ("ChuteLight", 480, 420, 4.0, "0.88, 0.92, 1", 1.1, "light falling through the chute onto the rug"),
-    ("RackGlow", 652, 318, 1.6, "0.4, 0.9, 0.95", 0.7, "server status lights"),
-    ("TVGlow", 268, 440, 1.6, "0.4, 0.95, 0.95", 0.7, "flickering TV"),
-    ("SparkLight", 612, 444, 1.2, "1, 0.9, 0.5", 0.6, "sparks"),
-    ("WorkLamp1", 560, 530, 2.0, "1, 0.85, 0.6", 0.6, "work lamp along the walkway"),
-    ("WorkLamp2", 700, 510, 2.0, "1, 0.85, 0.6", 0.6, "work lamp along the walkway"),
-    ("WorkLamp3", 830, 460, 2.0, "1, 0.85, 0.6", 0.6, "work lamp along the walkway"),
-    ("ExitLight", 905, 445, 2.4, "0.75, 0.8, 0.95", 0.75, "light from the exit corridor"),
+AMBIENT = (0.35, 0.37, 0.46)                             # dim cool base light; the floor never goes black
+WARM, CYAN = (1.0, 0.80, 0.52), (0.40, 0.92, 0.95)
+# Native px. Prop sources without "at"/"height" sit on the centre of the prop's glowing pixels
+# (tools/pixel_lights.py). Room sources are drawn in room_floor.png (ROOM_SOURCES).
+ROOM_SOURCES = {
+    "chute": (146, 26, 173, 36),                         # ceiling chute mouth (gen_basement_floor.py)
+    "exit": (305, 120, 319, 175),                        # opening in the right wall
+}
+LIGHTS = [
+    dict(name="ChuteBeam", type="beam", src="room:chute", at=(160, 144), height=110, color=(0.86, 0.92, 1.0),
+         energy=1.5, pool=30, mouth=9, haze=0.14, halo=0.3, halo_r=7,
+         why="cold light falling through the ceiling chute: a shaft of haze and dust that lands on the rug where "
+             "she wakes up - the brightest, cleanest spot in the room"),
+    dict(name="WorkLampA", type="point", src="lamp_a", color=WARM, energy=1.8, radius=88, halo=0.6, halo_r=6,
+         why="caged work bulb at the walkway's first stretch: a warm pool leading away from the rug; it also rakes "
+             "the junk behind it, so those piles throw shadows away from the path"),
+    dict(name="WorkLampB", type="point", src="lamp_b", color=WARM, energy=1.8, radius=88, halo=0.6, halo_r=6,
+         why="second work bulb on the last stretch: keeps the walkway the lit band all the way to the exit"),
+    dict(name="ExitSpill", type="spot", src="room:exit", at=(313, 148), height=14, color=(1.0, 0.86, 0.66),
+         energy=1.4, radius=70, dir=(-1, 0, -0.35), angle=160,
+         why="the elevator hall's entry lamp spilling in through the exit opening: the way out glows warm"),
+    dict(name="RackLEDs", type="point", src="a_rack", color=CYAN, energy=0.9, radius=30, halo=0.2, halo_r=3,
+         why="status LEDs of the server rack, still blinking"),
+    dict(name="TVFlicker", type="spot", src="a_tv", color=CYAN, energy=1.8, radius=46, dir=(0, 1, -0.25), angle=150,
+         halo=0.3, halo_r=4, flicker=[0.35, 0.7, 0.35, 1.0, 0.35, 0.0],
+         why="the flickering TV fed by the severed line: its screen throws cyan onto the floor in front of it"),
+    dict(name="BarrelTV", type="spot", src="t_barrel_tv", color=CYAN, energy=1.0, radius=34, dir=(0, 1, -0.3),
+         angle=150, halo=0.2, halo_r=3, why="the TV left on a drum in the server corner, still powered"),
+    dict(name="Sparks", type="point", src="a_spark", color=(1.0, 0.88, 0.45), energy=2.6, radius=48, halo=0.6,
+         halo_r=5, flicker=[1.0, 0.55, 0.0, 0.0, 1.0, 0.0, 0.55, 0.0],
+         why="sparks from the severed power line flash in step with the burst frames"),
 ]
 
 HALL = "res://scenes/world/elevator_hall.tscn"
@@ -109,6 +141,34 @@ def walk_samples():
         n = max(1, int(math.dist((x0, y0), (x1, y1)) / 6))
         out += [(x0 + (x1 - x0) * t / n, y0 + (y1 - y0) * t / n) for t in range(n)]
     return out + [WALK[-1]]
+
+
+def snapped(folder, name, x, y, extra):
+    """Screen position snapped so the sprite's left edge and base line sit on the 3x pixel grid
+    (the lighting buffers are native-res; art off the grid would shift against its own light)."""
+    im = Image.open(f"assets/env/basement/{folder}/{name}.png")
+    w = im.width // extra.get("frames", 1)
+    left = round((x - w * S / 2) / S) * S
+    return left + w * S / 2, round(y / S) * S
+
+
+def light_props():
+    """PLAN entries usable as light sources, keyed by their "id" extra or their (unique) file name; native px."""
+    props, count = {}, {}
+    for _f, name, *_r in PLAN:
+        count[name] = count.get(name, 0) + 1
+    for i, (folder, name, x, y, why, extra) in enumerate(PLAN):
+        key = extra.get("id", name)
+        if "id" not in extra and count[name] > 1:
+            continue                                     # ambiguous: give it an "id" to use it as a source
+        im = Image.open(f"assets/env/basement/{folder}/{name}.png")
+        fr = extra.get("frames", 1)
+        sx, sy = snapped(folder, name, x, y, extra)
+        w = im.width // fr
+        props[key] = dict(png=f"assets/env/basement/{folder}/{name}.png", frames=fr, fps=extra.get("fps", 8),
+                          left=(sx - w * S / 2) / S, top=sy / S - im.height, base_y=sy / S, wall_base=None,
+                          node=f"{name}_{i}")
+    return props
 
 
 def collider(folder, name, x, y, extra):
@@ -142,6 +202,7 @@ def check():
         rx0, ry0, rx1, ry1 = RUG_RECT
         if x0 < rx1 and x1 > rx0 and y0 < ry1 and y1 > ry0:
             problems.append(f"{name}: sits on the rug")
+    problems += pixel_lights.check(LIGHTS, light_props(), ROOM_SOURCES)
     for name, sx, sy, _face, _why in SPAWNS:
         if not any(math.dist((sx, sy), q) <= HALF * S for q in pts):
             problems.append(f"spawn {name}: not on the walkway")
@@ -154,32 +215,30 @@ def check():
 def write_scene():
     files = list(dict.fromkeys((f, n) for f, n, *_ in PLAN))
     L = ["[gd_scene format=3]", "",
+         '[ext_resource type="Script" path="res://scripts/world/pixel_lighting.gd" id="lighting_s"]',
+         '[ext_resource type="Script" path="res://scripts/world/pixel_light.gd" id="light_s"]',
          '[ext_resource type="Script" path="res://scripts/world/pixel_room.gd" id="room_s"]',
          '[ext_resource type="Texture2D" path="res://assets/env/basement/room_floor.png" id="floor"]',
          '[ext_resource type="Script" path="res://scripts/world/pixel_prop.gd" id="prop_s"]',
          '[ext_resource type="Script" path="res://scripts/world/exit_zone.gd" id="exit_s"]',
          '[ext_resource type="PackedScene" path="res://scenes/characters/player.tscn" id="player"]']
     L += [f'[ext_resource type="Texture2D" path="res://assets/env/basement/{f}/{n}.png" id="{n}"]' for f, n in files]
-    L += ["", '[sub_resource type="Gradient" id="steps"]', "interpolation_mode = 1",
-          "offsets = PackedFloat32Array(0, 0.3, 0.55, 0.78, 0.95)",
-          "colors = PackedColorArray(1, 1, 1, 1, 0.82, 0.82, 0.82, 1, 0.62, 0.62, 0.62, 1, 0.38, 0.38, 0.38, 1, 0, 0, 0, 1)", "",
-          '[sub_resource type="GradientTexture2D" id="lightTex"]', 'gradient = SubResource("steps")', "width = 128", "height = 128",
-          "fill = 1", "fill_from = Vector2(0.5, 0.5)", "fill_to = Vector2(1, 0.5)", "",
-          '[node name="BasementTest" type="Node2D"]', "y_sort_enabled = true", "",
-          '[node name="Dark" type="CanvasModulate" parent="."]', "color = Color(0.36, 0.37, 0.44, 1)", "",
+    L += ["", '[node name="BasementTest" type="Node2D"]', "y_sort_enabled = true", "",
+          "; 2.5D pixel lighting for this map (height buffer + light pass + composite)",
+          '[node name="Lighting" type="Node" parent="."]', 'script = ExtResource("lighting_s")',
+          f"ambient = Color({AMBIENT[0]}, {AMBIENT[1]}, {AMBIENT[2]}, 1)", "",
           '[node name="Room" type="Sprite2D" parent="."]', "z_index = -10", 'texture = ExtResource("floor")',
           'script = ExtResource("room_s")', ""]
     for i, (folder, name, x, y, why, extra) in enumerate(PLAN):
-        L += [f"; {why}", f'[node name="{name}_{i}" type="StaticBody2D" parent="."]', f"position = Vector2({x}, {y})",
+        sx, sy = snapped(folder, name, x, y, extra)
+        L += [f"; {why}", f'[node name="{name}_{i}" type="StaticBody2D" parent="."]', f"position = Vector2({sx:g}, {sy:g})",
               'script = ExtResource("prop_s")', f'texture = ExtResource("{name}")']
         if not extra.get("solid", True):
             L.append("solid = false")
         if "frames" in extra:
             L += [f"frames = {extra['frames']}", f"fps = {float(extra['fps'])}"]
         L.append("")
-    for n, x, y, s, c, e, why in LIGHTS:
-        L += [f"; {why}", f'[node name="{n}" type="PointLight2D" parent="."]', f"position = Vector2({x}, {y})",
-              f"color = Color({c}, 1)", f"energy = {e}", 'texture = SubResource("lightTex")', f"texture_scale = {s}", ""]
+    L += pixel_lights.scene_lines(LIGHTS, light_props(), ROOM_SOURCES)
     for name, (x, y, w, h), target, spawn, why in EXITS:
         L += [f"; {why}", f'[node name="{name}" type="Area2D" parent="."]',
               f"position = Vector2({x + w / 2:g}, {y + h / 2:g})", 'script = ExtResource("exit_s")',

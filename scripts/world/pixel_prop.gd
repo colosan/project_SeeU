@@ -20,8 +20,15 @@ const ENV_SCALE := 3
 		frames = maxi(1, v)
 		_rebuild()
 @export var fps := 8.0
+## Native px between the sprite's bottom row and the floor, for props hung on a wall face
+## (lighting heights). 0 = stands on the floor at its base line.
+@export var height_offset := 0
+
+## Frame shown right now (PixelLight.sync_prop reads it to flicker in step).
+var current_frame := 0
 
 var _anim_sprite: Sprite2D
+var _twin: Sprite2D
 var _anim_t := 0.0
 
 ## Off for walkable floor litter: no collider, no shadow, drawn under everything.
@@ -72,6 +79,9 @@ func _rebuild() -> void:
 	sprite.position = Vector2(-size.x * ENV_SCALE / 2.0, -size.y * ENV_SCALE)
 	add_child(sprite)
 	_anim_sprite = sprite if frames > 1 else null
+	_twin = null
+	if not Engine.is_editor_hint() and PixelLighting.active_for(self):
+		_add_light_twin(sprite)
 
 	if not solid:
 		return
@@ -115,8 +125,29 @@ static func _contact_shadow(src: Image, flipped: bool) -> ImageTexture:
 	return ImageTexture.create_from_image(out)
 
 
+## Same sprite on the lighting height layer: standing props are vertical faces whose height grows
+## from the base line; floor decals (not solid, not wall-hung) lie flat.
+func _add_light_twin(sprite: Sprite2D) -> void:
+	_twin = Sprite2D.new()
+	_twin.name = "LightTwin"
+	_twin.texture = sprite.texture
+	_twin.hframes = sprite.hframes
+	_twin.flip_h = sprite.flip_h
+	_twin.centered = false
+	_twin.scale = sprite.scale
+	_twin.position = sprite.position
+	_twin.material = PixelLighting.height_material({
+		"base_y": sprite.texture.get_height(), "units_per_native": 1.0, "height_offset": float(height_offset),
+		"kind": PixelLighting.KIND_FACE, "lies_flat": not solid and height_offset == 0,
+		"emit": PixelLighting.emission_for(texture)})
+	PixelLighting.add_twin(self, _twin)
+
+
 func _process(delta: float) -> void:
 	if _anim_sprite == null or not is_instance_valid(_anim_sprite):
 		return
 	_anim_t += delta
-	_anim_sprite.frame = int(_anim_t * fps) % frames
+	current_frame = int(_anim_t * fps) % frames
+	_anim_sprite.frame = current_frame
+	if _twin != null and is_instance_valid(_twin):
+		_twin.frame = current_frame

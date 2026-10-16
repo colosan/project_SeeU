@@ -1,5 +1,7 @@
 [gd_scene format=3]
 
+[ext_resource type="Script" path="res://scripts/world/pixel_lighting.gd" id="lighting_s"]
+[ext_resource type="Script" path="res://scripts/world/pixel_light.gd" id="light_s"]
 [ext_resource type="Script" path="res://scripts/world/pixel_room.gd" id="room_s"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/room_floor.png" id="floor"]
 [ext_resource type="Script" path="res://scripts/world/pixel_prop.gd" id="prop_s"]
@@ -35,27 +37,17 @@
 [ext_resource type="Texture2D" path="res://assets/env/basement/code/a_spark.png" id="a_spark"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/code/a_tv.png" id="a_tv"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/code/a_fan.png" id="a_fan"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/code/s_worklamp.png" id="s_worklamp"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/code/f_puddle1.png" id="f_puddle1"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/code/f_plate1.png" id="f_plate1"]
-
-[sub_resource type="Gradient" id="steps"]
-interpolation_mode = 1
-offsets = PackedFloat32Array(0, 0.3, 0.55, 0.78, 0.95)
-colors = PackedColorArray(1, 1, 1, 1, 0.82, 0.82, 0.82, 1, 0.62, 0.62, 0.62, 1, 0.38, 0.38, 0.38, 1, 0, 0, 0, 1)
-
-[sub_resource type="GradientTexture2D" id="lightTex"]
-gradient = SubResource("steps")
-width = 128
-height = 128
-fill = 1
-fill_from = Vector2(0.5, 0.5)
-fill_to = Vector2(1, 0.5)
 
 [node name="BasementTest" type="Node2D"]
 y_sort_enabled = true
 
-[node name="Dark" type="CanvasModulate" parent="."]
-color = Color(0.36, 0.37, 0.44, 1)
+; 2.5D pixel lighting for this map (height buffer + light pass + composite)
+[node name="Lighting" type="Node" parent="."]
+script = ExtResource("lighting_s")
+ambient = Color(0.35, 0.37, 0.46, 1)
 
 [node name="Room" type="Sprite2D" parent="."]
 z_index = -10
@@ -64,19 +56,19 @@ script = ExtResource("room_s")
 
 ; chute drop: biggest heap directly under the ceiling chute
 [node name="c_main_0" type="StaticBody2D" parent="."]
-position = Vector2(480, 350)
+position = Vector2(480, 351)
 script = ExtResource("prop_s")
 texture = ExtResource("c_main")
 
 ; robot that slid down the heap, slumped at its foot
 [node name="org_android_sit_1" type="StaticBody2D" parent="."]
-position = Vector2(352, 400)
+position = Vector2(351, 399)
 script = ExtResource("prop_s")
 texture = ExtResource("org_android_sit")
 
 ; head rolled off the heap
 [node name="org_head_2" type="StaticBody2D" parent="."]
-position = Vector2(590, 398)
+position = Vector2(591, 399)
 script = ExtResource("prop_s")
 texture = ExtResource("org_head")
 
@@ -88,97 +80,97 @@ texture = ExtResource("org_arm")
 
 ; cables spilling from the heap
 [node name="org_cables_4" type="StaticBody2D" parent="."]
-position = Vector2(610, 368)
+position = Vector2(609, 369)
 script = ExtResource("prop_s")
 texture = ExtResource("org_cables")
 
 ; back wall: overflow of the chute heap
 [node name="e_11_5" type="StaticBody2D" parent="."]
-position = Vector2(322, 258)
+position = Vector2(322.5, 258)
 script = ExtResource("prop_s")
 texture = ExtResource("e_11")
 
 ; back wall: overflow of the chute heap
 [node name="e_5_6" type="StaticBody2D" parent="."]
-position = Vector2(708, 272)
+position = Vector2(708, 273)
 script = ExtResource("prop_s")
 texture = ExtResource("e_5")
 
 ; back-left: audio sorting corner
 [node name="c_small2_7" type="StaticBody2D" parent="."]
-position = Vector2(118, 336)
+position = Vector2(118.5, 336)
 script = ExtResource("prop_s")
 texture = ExtResource("c_small2")
 
 ; back-left: amps stacked by whoever sorted audio gear
 [node name="t_amp_tower_8" type="StaticBody2D" parent="."]
-position = Vector2(236, 396)
+position = Vector2(235.5, 396)
 script = ExtResource("prop_s")
 texture = ExtResource("t_amp_tower")
 
 ; back-left: speaker leaning on the audio corner
 [node name="s_speaker_9" type="StaticBody2D" parent="."]
-position = Vector2(172, 376)
+position = Vector2(171, 375)
 script = ExtResource("prop_s")
 texture = ExtResource("s_speaker")
 
 ; back-left corner fill
 [node name="e_0_10" type="StaticBody2D" parent="."]
-position = Vector2(95, 300)
+position = Vector2(94.5, 300)
 script = ExtResource("prop_s")
 texture = ExtResource("e_0")
 
 ; left wall: storage junk
 [node name="e_1_11" type="StaticBody2D" parent="."]
-position = Vector2(52, 438)
+position = Vector2(51, 438)
 script = ExtResource("prop_s")
 texture = ExtResource("e_1")
 
 ; left wall: storage junk
 [node name="e_3_12" type="StaticBody2D" parent="."]
-position = Vector2(70, 566)
+position = Vector2(70.5, 567)
 script = ExtResource("prop_s")
 texture = ExtResource("e_3")
 
 ; left wall: storage junk
 [node name="e_7_13" type="StaticBody2D" parent="."]
-position = Vector2(58, 692)
+position = Vector2(57, 693)
 script = ExtResource("prop_s")
 texture = ExtResource("e_7")
 
 ; pushed aside when the walkway was cleared (south side)
 [node name="c_ridge_14" type="StaticBody2D" parent="."]
-position = Vector2(250, 745)
+position = Vector2(249, 744)
 script = ExtResource("prop_s")
 texture = ExtResource("c_ridge")
 
 ; crates shoved off the walkway
 [node name="t_crates_15" type="StaticBody2D" parent="."]
-position = Vector2(470, 690)
+position = Vector2(471, 690)
 script = ExtResource("prop_s")
 texture = ExtResource("t_crates")
 
 ; back-right: server/tv sorting corner
 [node name="c_small1_16" type="StaticBody2D" parent="."]
-position = Vector2(790, 380)
+position = Vector2(789, 381)
 script = ExtResource("prop_s")
 texture = ExtResource("c_small1")
 
 ; back-right corner fill
 [node name="e_9_17" type="StaticBody2D" parent="."]
-position = Vector2(902, 322)
+position = Vector2(901.5, 321)
 script = ExtResource("prop_s")
 texture = ExtResource("e_9")
 
 ; server corner: a TV left on a drum, still powered
 [node name="t_barrel_tv_18" type="StaticBody2D" parent="."]
-position = Vector2(700, 420)
+position = Vector2(700.5, 420)
 script = ExtResource("prop_s")
 texture = ExtResource("t_barrel_tv")
 
 ; front-right: stage leftovers
 [node name="c_mid_19" type="StaticBody2D" parent="."]
-position = Vector2(800, 752)
+position = Vector2(801, 753)
 script = ExtResource("prop_s")
 texture = ExtResource("c_mid")
 
@@ -190,37 +182,37 @@ texture = ExtResource("t_rack_monitor")
 
 ; front wall: overflow
 [node name="e_8_21" type="StaticBody2D" parent="."]
-position = Vector2(545, 750)
+position = Vector2(546, 750)
 script = ExtResource("prop_s")
 texture = ExtResource("e_8")
 
 ; right wall below the exit
 [node name="e_10_22" type="StaticBody2D" parent="."]
-position = Vector2(918, 735)
+position = Vector2(916.5, 735)
 script = ExtResource("prop_s")
 texture = ExtResource("e_10")
 
 ; mic stand dropped beside the walkway
 [node name="s_mic_23" type="StaticBody2D" parent="."]
-position = Vector2(548, 700)
+position = Vector2(547.5, 699)
 script = ExtResource("prop_s")
 texture = ExtResource("s_mic")
 
 ; robot legs shoved off the walkway
 [node name="org_legs_24" type="StaticBody2D" parent="."]
-position = Vector2(690, 690)
+position = Vector2(688.5, 690)
 script = ExtResource("prop_s")
 texture = ExtResource("org_legs")
 
 ; robot pushed off the walkway, lying on its back
 [node name="org_android_lying_25" type="StaticBody2D" parent="."]
-position = Vector2(360, 560)
+position = Vector2(360, 561)
 script = ExtResource("prop_s")
 texture = ExtResource("org_android_lying")
 
 ; server rack whose status lights still blink
 [node name="a_rack_26" type="StaticBody2D" parent="."]
-position = Vector2(652, 356)
+position = Vector2(651, 357)
 script = ExtResource("prop_s")
 texture = ExtResource("a_rack")
 frames = 6
@@ -236,7 +228,7 @@ fps = 10.0
 
 ; TV on the same line, flickering
 [node name="a_tv_28" type="StaticBody2D" parent="."]
-position = Vector2(268, 470)
+position = Vector2(267, 471)
 script = ExtResource("prop_s")
 texture = ExtResource("a_tv")
 frames = 6
@@ -244,89 +236,146 @@ fps = 6.0
 
 ; ventilation fan by the exit corridor
 [node name="a_fan_29" type="StaticBody2D" parent="."]
-position = Vector2(888, 625)
+position = Vector2(888, 624)
 script = ExtResource("prop_s")
 texture = ExtResource("a_fan")
 frames = 4
 fps = 12.0
 
+; work lamp at the walkway's first stretch, next to the sparking line it was plugged into
+[node name="s_worklamp_30" type="StaticBody2D" parent="."]
+position = Vector2(669, 459)
+script = ExtResource("prop_s")
+texture = ExtResource("s_worklamp")
+
+; work lamp on the last stretch before the exit, in front of the server corner
+[node name="s_worklamp_31" type="StaticBody2D" parent="."]
+position = Vector2(792, 408)
+script = ExtResource("prop_s")
+texture = ExtResource("s_worklamp")
+
 ; oil leaking from the storage junk by the left wall
-[node name="f_puddle1_30" type="StaticBody2D" parent="."]
-position = Vector2(200, 520)
+[node name="f_puddle1_32" type="StaticBody2D" parent="."]
+position = Vector2(199.5, 519)
 script = ExtResource("prop_s")
 texture = ExtResource("f_puddle1")
 solid = false
 
 ; loose plate kicked off the walkway
-[node name="f_plate1_31" type="StaticBody2D" parent="."]
-position = Vector2(300, 520)
+[node name="f_plate1_33" type="StaticBody2D" parent="."]
+position = Vector2(300, 519)
 script = ExtResource("prop_s")
 texture = ExtResource("f_plate1")
 solid = false
 
-; light falling through the chute onto the rug
-[node name="ChuteLight" type="PointLight2D" parent="."]
-position = Vector2(480, 420)
-color = Color(0.88, 0.92, 1, 1)
-energy = 1.1
-texture = SubResource("lightTex")
-texture_scale = 4.0
+; cold light falling through the ceiling chute: a shaft of haze and dust that lands on the rug where she wakes up - the brightest, cleanest spot in the room
+[node name="ChuteBeam" type="Node2D" parent="."]
+position = Vector2(480, 432)
+script = ExtResource("light_s")
+type = 2
+color = Color(0.86, 0.92, 1, 1)
+energy = 1.5
+height = 110
+radius = 80
+pool_radius = 30
+mouth_radius = 9
+haze = 0.14
+halo = 0.3
+halo_radius = 7
 
-; server status lights
-[node name="RackGlow" type="PointLight2D" parent="."]
-position = Vector2(652, 318)
-color = Color(0.4, 0.9, 0.95, 1)
-energy = 0.7
-texture = SubResource("lightTex")
-texture_scale = 1.6
+; caged work bulb at the walkway's first stretch: a warm pool leading away from the rug; it also rakes the junk behind it, so those piles throw shadows away from the path
+[node name="WorkLampA" type="Node2D" parent="."]
+position = Vector2(669, 462)
+script = ExtResource("light_s")
+type = 0
+color = Color(1, 0.8, 0.52, 1)
+energy = 1.8
+height = 32.5
+radius = 88
+halo = 0.6
+halo_radius = 6
 
-; flickering TV
-[node name="TVGlow" type="PointLight2D" parent="."]
-position = Vector2(268, 440)
-color = Color(0.4, 0.95, 0.95, 1)
-energy = 0.7
-texture = SubResource("lightTex")
-texture_scale = 1.6
+; second work bulb on the last stretch: keeps the walkway the lit band all the way to the exit
+[node name="WorkLampB" type="Node2D" parent="."]
+position = Vector2(792, 411)
+script = ExtResource("light_s")
+type = 0
+color = Color(1, 0.8, 0.52, 1)
+energy = 1.8
+height = 32.5
+radius = 88
+halo = 0.6
+halo_radius = 6
 
-; sparks
-[node name="SparkLight" type="PointLight2D" parent="."]
-position = Vector2(612, 444)
-color = Color(1, 0.9, 0.5, 1)
-energy = 0.6
-texture = SubResource("lightTex")
-texture_scale = 1.2
+; the elevator hall's entry lamp spilling in through the exit opening: the way out glows warm
+[node name="ExitSpill" type="Node2D" parent="."]
+position = Vector2(939, 444)
+script = ExtResource("light_s")
+type = 1
+color = Color(1, 0.86, 0.66, 1)
+energy = 1.4
+height = 14
+radius = 70
+direction = Vector3(-1, 0, -0.35)
+angle = 160
 
-; work lamp along the walkway
-[node name="WorkLamp1" type="PointLight2D" parent="."]
-position = Vector2(560, 530)
-color = Color(1, 0.85, 0.6, 1)
-energy = 0.6
-texture = SubResource("lightTex")
-texture_scale = 2.0
+; status LEDs of the server rack, still blinking
+[node name="RackLEDs" type="Node2D" parent="."]
+position = Vector2(658.5, 360)
+script = ExtResource("light_s")
+type = 0
+color = Color(0.4, 0.92, 0.95, 1)
+energy = 0.9
+height = 13.5
+radius = 30
+halo = 0.2
+halo_radius = 3
 
-; work lamp along the walkway
-[node name="WorkLamp2" type="PointLight2D" parent="."]
-position = Vector2(700, 510)
-color = Color(1, 0.85, 0.6, 1)
-energy = 0.6
-texture = SubResource("lightTex")
-texture_scale = 2.0
+; the flickering TV fed by the severed line: its screen throws cyan onto the floor in front of it
+[node name="TVFlicker" type="Node2D" parent="."]
+position = Vector2(264, 474)
+script = ExtResource("light_s")
+type = 1
+color = Color(0.4, 0.92, 0.95, 1)
+energy = 1.8
+height = 7.5
+radius = 46
+direction = Vector3(0, 1, -0.25)
+angle = 150
+halo = 0.3
+halo_radius = 4
+flicker = PackedFloat32Array(0.35, 0.7, 0.35, 1, 0.35, 0)
+flicker_fps = 6
+sync_prop = NodePath("../a_tv_28")
 
-; work lamp along the walkway
-[node name="WorkLamp3" type="PointLight2D" parent="."]
-position = Vector2(830, 460)
-color = Color(1, 0.85, 0.6, 1)
-energy = 0.6
-texture = SubResource("lightTex")
-texture_scale = 2.0
+; the TV left on a drum in the server corner, still powered
+[node name="BarrelTV" type="Node2D" parent="."]
+position = Vector2(701.25, 423)
+script = ExtResource("light_s")
+type = 1
+color = Color(0.4, 0.92, 0.95, 1)
+energy = 1.0
+height = 19.9
+radius = 34
+direction = Vector3(0, 1, -0.3)
+angle = 150
+halo = 0.2
+halo_radius = 3
 
-; light from the exit corridor
-[node name="ExitLight" type="PointLight2D" parent="."]
-position = Vector2(905, 445)
-color = Color(0.75, 0.8, 0.95, 1)
-energy = 0.75
-texture = SubResource("lightTex")
-texture_scale = 2.4
+; sparks from the severed power line flash in step with the burst frames
+[node name="Sparks" type="Node2D" parent="."]
+position = Vector2(634.655, 459)
+script = ExtResource("light_s")
+type = 0
+color = Color(1, 0.88, 0.45, 1)
+energy = 2.6
+height = 8.3
+radius = 48
+halo = 0.6
+halo_radius = 5
+flicker = PackedFloat32Array(1, 0.55, 0, 0, 1, 0, 0.55, 0)
+flicker_fps = 10
+sync_prop = NodePath("../a_spark_27")
 
 ; the exit opening in the right wall (native x 306..319, y 120..175)
 [node name="ToElevatorHall" type="Area2D" parent="."]

@@ -1,7 +1,13 @@
 """Draws the basement test room floor/walls at native 320x240 (shown at 3x in game).
 Hand-made flat art: no AI generation. Run: python tools/gen_basement_floor.py"""
+import os
 import random
+import sys
+
 from PIL import Image, ImageDraw
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "art"))
+from pix import KIND_CAP, KIND_FACE, KIND_FLOOR, save_height_map  # noqa: E402
 
 random.seed(3)
 W, H = 320, 240
@@ -88,3 +94,21 @@ d.rectangle((x1 - 6, y1 - 4, x1, y1), fill=WALK)           # one corner folded/m
 
 im.save('assets/env/basement/room_floor.png')
 print('saved assets/env/basement/room_floor.png')
+
+# --- height/normal companion for the lighting pass: same numbers as the drawing above
+WALL_BASE, WALL_TOP_Y = 64, 40                      # back wall face rows 40..63 stand on the floor at y 64
+WALL_H = WALL_BASE - WALL_TOP_Y                     # 24 px (~1.1 m) visible face; the band above is the wall's top
+
+
+def cell(x, y):
+    if 14 <= x <= W - 15 and y >= WALL_BASE:
+        return 0, KIND_FLOOR                            # floor (rug, walkway and seams are all flat)
+    if x >= W - 15 and 120 <= y <= 175:
+        return 0, KIND_FLOOR                            # exit opening in the right wall
+    if 14 <= x <= W - 15 and WALL_TOP_Y <= y < WALL_BASE:
+        return WALL_BASE - y, KIND_FACE                 # back wall face: height above its base
+    return WALL_H, KIND_CAP                             # wall tops, side walls, the ceiling chute: never lit directly
+
+
+save_height_map('assets/env/basement/room_floor.height.png', W, H, cell)
+print('saved assets/env/basement/room_floor.height.png')

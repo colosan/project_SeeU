@@ -33,6 +33,24 @@ RAMPS = {
 }
 ACCENT = "glow"
 
+# Surface kinds for the pixel-lighting height buffer (B channel = kind * 64), see save_height_map.
+KIND_FLOOR, KIND_FACE, KIND_CHARACTER, KIND_CAP = 0, 1, 2, 3   # floor/top-facing, vertical front face, character, wall top/void cap
+
+
+def save_height_map(path, w, h, cell):
+    """Writes a room's height/normal companion PNG for the lighting pass (scripts/world/pixel_lighting.gd).
+    cell(x, y) -> (height above the floor in native px, kind) or None for void.
+    R = height (0..255 px), G = 0 (emission comes from the .emit.png mask), B = kind * 64, A = 255 (0 = void)."""
+    im = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    px = im.load()
+    for y in range(h):
+        for x in range(w):
+            c = cell(x, y)
+            if c is not None:
+                hh, kind = c
+                px[x, y] = (max(0, min(255, int(hh))), 0, kind * 64, 255)
+    im.save(path)
+
 
 class Pix:
     def __init__(self, w, h):
