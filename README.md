@@ -25,5 +25,6 @@
 - [docs/WORLD.md](docs/WORLD.md): 세계관 설정서
 - [docs/DESIGN.md](docs/DESIGN.md): 세계관, 화면 구성, 결정 사항
 - [docs/ART_PIPELINE.md](docs/ART_PIPELINE.md): 배경·소품 그리는 법 (코드 그리기, PixelLab 가져오기, 배치 규칙)
+- [docs/CHARACTER_PIPELINE.md](docs/CHARACTER_PIPELINE.md): 캐릭터 스프라이트 만드는 법과 시행착오 (PixelLab 정면 → v3 회전 → skeleton-v3 걷기)
 - [docs/WORKFLOW.md](docs/WORKFLOW.md): 실행, 검증, 커밋 방법과 현재 진행 상황
 - [docs/ASSETS.md](docs/ASSETS.md): 모든 에셋의 출처

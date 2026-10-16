@@ -15,7 +15,7 @@
 
 | 파일 | 도구 | ID | 레퍼런스 | 수정 |
 |---|---|---|---|---|
-| `assets/characters/seeu/rotations/*.png` | PixelLab create_image_pro (정면) → create_character v3 high top-down (8방향 회전) | 캐릭터 `e5b7f209-5d41-4dac-8e34-24a8d1a9e982`, 정면 이미지 작업 `5f8c3873-7f14-4f41-b3ab-8e0670ef4998` (후보 2번) | 15주년 공식 의상 설계도 (나무위키 게재본), 15주년 기념 일러스트 | 피부색을 설계도 색(`#FDE9ED` 계열)으로 교체 |
+| `assets/characters/seeu/rotations/*.png` | PixelLab create_image_pro (정면) → create_character v3 high top-down (8방향 회전) | 캐릭터 `e5b7f209-5d41-4dac-8e34-24a8d1a9e982`, 정면 이미지 작업 `5f8c3873-7f14-4f41-b3ab-8e0670ef4998` (후보 2번) | 15주년 공식 의상 설계도 (나무위키 게재본), 15주년 기념 일러스트 | 피부색을 설계도 색(`#FDE9ED` 계열)으로 교체. 과정은 [CHARACTER_PIPELINE.md](CHARACTER_PIPELINE.md) |
 | `assets/characters/seeu/walk/<방향>/frame_*.png` | PixelLab animate_character skeleton-v3, 템플릿 `walking-8-frames` | 애니메이션 그룹 `df8b53ce-cd31-4ba6-a9ff-787ee4fa2d73` | 위 캐릭터 | 없음 (오른쪽 방향은 한 번 다시 생성) |
 
 ## 지하 시험 방 (저장소에 포함)

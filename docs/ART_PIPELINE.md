@@ -8,7 +8,7 @@
 - AI는 "많이 쌓인 것"을 작은 같은 물체의 반복으로 그려서 환공포증 같은 그림이 나온다.
 - `create_image_pixflux` + 밑그림(img2img)은 각도는 지키지만 품질이 낮다.
 - 이미 만든 그림을 확대하면 픽셀 규격이 깨진다 — 금지.
-- 쓸 만했던 PixelLab: 나무·로봇·케이블처럼 둥근 것(`create_map_object`), 캐릭터(`create_character` v3), 걷기(`animate_character` skeleton-v3).
+- 쓸 만했던 PixelLab: 나무·로봇·케이블처럼 둥근 것(`create_map_object`), 캐릭터(`create_character` v3), 걷기(`animate_character` skeleton-v3). 캐릭터 순서와 시행착오는 [CHARACTER_PIPELINE.md](CHARACTER_PIPELINE.md).
 
 ## 2. 코드로 그리기 — `tools/art/pix.py`
 - `Pix(w, h)`: 픽셀마다 (재질, 단계)를 저장. `rect/hline/vline/ellipse/paste`, `outline()`(실루엣에 sel-out 한 겹), `bbox_crop()`, `image()`.
