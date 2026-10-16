@@ -45,7 +45,7 @@ y_sort_enabled = true
 ; 2.5D pixel lighting for this map (height buffer + light pass + composite)
 [node name="Lighting" type="Node" parent="."]
 script = ExtResource("lighting_s")
-ambient = Color(0.35, 0.37, 0.46, 1)
+ambient = Color(0.46, 0.48, 0.57, 1)
 
 [node name="Room" type="Sprite2D" parent="."]
 z_index = -10

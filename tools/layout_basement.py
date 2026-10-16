@@ -95,7 +95,7 @@ PLAN = [
      {"id": "lamp_a"}),
     (D, "dg_s_worklamp", 792, 408, "work lamp on the last stretch before the exit, in front of the server corner", {"id": "lamp_b"}),
 ]
-AMBIENT = (0.35, 0.37, 0.46)                             # dim cool base light; the floor never goes black
+AMBIENT = (0.46, 0.48, 0.57)                             # dim cool base light; the floor never goes black
 WARM, CYAN = (1.0, 0.80, 0.52), (0.40, 0.92, 0.95)
 # Native px. Prop sources without "at"/"height" sit on the centre of the prop's glowing pixels
 # (tools/pixel_lights.py). Room sources are drawn in room_floor.png (ROOM_SOURCES).
