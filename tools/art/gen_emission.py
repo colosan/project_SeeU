@@ -43,6 +43,9 @@ FILES = {
     "elevator/notice.png": {"generic": False},                              # the glow line is printed on paper
     "basement/code/a_rack.png": {"add": {("redp", 4): 1.0}},                # red status LEDs when on (glow ones are generic)
     "basement/code/s_worklamp.png": {"add": BULB},                          # caged work bulb on its stand
+    "basement/digital/dg_s_worklamp.png": {"add": BULB},                    # same lamp in the virtual-world set
+    "basement/digital/dg_a_rack.png": {"add": {("redp", 4): 1.0}},          # legacy server: red LEDs when on
+    "basement/digital/dg_a_meme_fine.png": {"add": {("warn", 3): 0.8, ("warn", 4): 1.0}},  # the burning-room flames
 }
 
 

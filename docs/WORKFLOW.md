@@ -6,7 +6,7 @@
 - PixelLab MCP(사용자 범위로 등록됨). 잔량 확인 `get_balance`. 생성 비용은 도구마다 다름: pixflux/map_object 1, create_image_pro 10~25, 타일셋 pro 25, 캐릭터 v3 2, skeleton-v3 걷기 방향당 3.
 
 ## 검증 루틴 (그림·배치를 바꿨으면 항상)
-1. 생성: `python tools/art/gen_junk.py`, `python tools/art/gen_elevator.py`(필요 시 `--force`), 바닥 `python tools/gen_basement_floor.py`, `python tools/gen_elevator_hall_floor.py`
+1. 생성: `python tools/art/gen_junk.py`, `python tools/art/gen_digital.py`(인터넷 세계판, 지하는 이쪽을 씀), `python tools/art/gen_elevator.py`(필요 시 `--force`), 바닥 `python tools/gen_basement_floor.py`, `python tools/gen_elevator_hall_floor.py`
    (바닥 그림과 함께 조명용 `.height.png`도 씀), 발광 마스크 `python tools/art/gen_emission.py`(그림을 바꿨으면 항상),
    배치 `python tools/layout_basement.py`, `python tools/layout_elevator_hall.py`(둘 다 문제 0개여야 함. 빛의 원천 검사 포함).
 2. 임포트: `godot --headless --path . --import`

@@ -7,39 +7,51 @@
 [ext_resource type="Script" path="res://scripts/world/pixel_prop.gd" id="prop_s"]
 [ext_resource type="Script" path="res://scripts/world/exit_zone.gd" id="exit_s"]
 [ext_resource type="PackedScene" path="res://scenes/characters/player.tscn" id="player"]
-[ext_resource type="Texture2D" path="res://assets/env/basement/code/c_main.png" id="c_main"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_c_main.png" id="dg_c_main"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_s_recycle.png" id="dg_s_recycle"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_a_cursor.png" id="dg_a_cursor"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/organic/org_android_sit.png" id="org_android_sit"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/organic/org_head.png" id="org_head"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/organic/org_arm.png" id="org_arm"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/organic/org_cables.png" id="org_cables"]
-[ext_resource type="Texture2D" path="res://assets/env/basement/code/e_11.png" id="e_11"]
-[ext_resource type="Texture2D" path="res://assets/env/basement/code/e_5.png" id="e_5"]
-[ext_resource type="Texture2D" path="res://assets/env/basement/code/c_small2.png" id="c_small2"]
-[ext_resource type="Texture2D" path="res://assets/env/basement/code/t_amp_tower.png" id="t_amp_tower"]
-[ext_resource type="Texture2D" path="res://assets/env/basement/code/s_speaker.png" id="s_speaker"]
-[ext_resource type="Texture2D" path="res://assets/env/basement/code/e_0.png" id="e_0"]
-[ext_resource type="Texture2D" path="res://assets/env/basement/code/e_1.png" id="e_1"]
-[ext_resource type="Texture2D" path="res://assets/env/basement/code/e_3.png" id="e_3"]
-[ext_resource type="Texture2D" path="res://assets/env/basement/code/e_7.png" id="e_7"]
-[ext_resource type="Texture2D" path="res://assets/env/basement/code/c_ridge.png" id="c_ridge"]
-[ext_resource type="Texture2D" path="res://assets/env/basement/code/t_crates.png" id="t_crates"]
-[ext_resource type="Texture2D" path="res://assets/env/basement/code/c_small1.png" id="c_small1"]
-[ext_resource type="Texture2D" path="res://assets/env/basement/code/e_9.png" id="e_9"]
-[ext_resource type="Texture2D" path="res://assets/env/basement/code/t_barrel_tv.png" id="t_barrel_tv"]
-[ext_resource type="Texture2D" path="res://assets/env/basement/code/c_mid.png" id="c_mid"]
-[ext_resource type="Texture2D" path="res://assets/env/basement/code/t_rack_monitor.png" id="t_rack_monitor"]
-[ext_resource type="Texture2D" path="res://assets/env/basement/code/e_8.png" id="e_8"]
-[ext_resource type="Texture2D" path="res://assets/env/basement/code/e_10.png" id="e_10"]
-[ext_resource type="Texture2D" path="res://assets/env/basement/code/s_mic.png" id="s_mic"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_s_dialog_404.png" id="dg_s_dialog_404"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_s_softbox.png" id="dg_s_softbox"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_f_home.png" id="dg_f_home"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_e_11.png" id="dg_e_11"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_e_5.png" id="dg_e_5"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_c_small2.png" id="dg_c_small2"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_t_amp_tower.png" id="dg_t_amp_tower"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_s_speaker.png" id="dg_s_speaker"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_s_meme_doge.png" id="dg_s_meme_doge"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_e_0.png" id="dg_e_0"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_e_1.png" id="dg_e_1"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_s_meme_troll.png" id="dg_s_meme_troll"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_e_3.png" id="dg_e_3"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_a_meme_fine.png" id="dg_a_meme_fine"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_e_7.png" id="dg_e_7"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_s_spam.png" id="dg_s_spam"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_c_ridge.png" id="dg_c_ridge"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_t_crates.png" id="dg_t_crates"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_c_small1.png" id="dg_c_small1"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_e_9.png" id="dg_e_9"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_t_barrel_tv.png" id="dg_t_barrel_tv"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_c_mid.png" id="dg_c_mid"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_t_rack_monitor.png" id="dg_t_rack_monitor"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_e_8.png" id="dg_e_8"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_e_10.png" id="dg_e_10"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_s_mic.png" id="dg_s_mic"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/organic/org_legs.png" id="org_legs"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/organic/org_android_lying.png" id="org_android_lying"]
-[ext_resource type="Texture2D" path="res://assets/env/basement/code/a_rack.png" id="a_rack"]
-[ext_resource type="Texture2D" path="res://assets/env/basement/code/a_spark.png" id="a_spark"]
-[ext_resource type="Texture2D" path="res://assets/env/basement/code/a_tv.png" id="a_tv"]
-[ext_resource type="Texture2D" path="res://assets/env/basement/code/a_fan.png" id="a_fan"]
-[ext_resource type="Texture2D" path="res://assets/env/basement/code/s_worklamp.png" id="s_worklamp"]
-[ext_resource type="Texture2D" path="res://assets/env/basement/code/f_puddle1.png" id="f_puddle1"]
-[ext_resource type="Texture2D" path="res://assets/env/basement/code/f_plate1.png" id="f_plate1"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_s_gcbot.png" id="dg_s_gcbot"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_a_rack.png" id="dg_a_rack"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_a_spark.png" id="dg_a_spark"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_a_tv.png" id="dg_a_tv"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_a_fan.png" id="dg_a_fan"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_a_bugs.png" id="dg_a_bugs"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_s_worklamp.png" id="dg_s_worklamp"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_f_puddle1.png" id="dg_f_puddle1"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_f_plate1.png" id="dg_f_plate1"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_f_hello.png" id="dg_f_hello"]
 
 [node name="BasementTest" type="Node2D"]
 y_sort_enabled = true
@@ -54,218 +66,300 @@ z_index = -10
 texture = ExtResource("floor")
 script = ExtResource("room_s")
 
-; chute drop: biggest heap directly under the ceiling chute
-[node name="c_main_0" type="StaticBody2D" parent="."]
+; deletion chute drop: the biggest heap of deleted data right under the chute
+[node name="dg_c_main_0" type="StaticBody2D" parent="."]
 position = Vector2(480, 351)
 script = ExtResource("prop_s")
-texture = ExtResource("c_main")
+texture = ExtResource("dg_c_main")
 
-; robot that slid down the heap, slumped at its foot
-[node name="org_android_sit_1" type="StaticBody2D" parent="."]
+; the recycle bin's own intake can, overflowing next to the heap
+[node name="dg_s_recycle_1" type="StaticBody2D" parent="."]
+position = Vector2(300, 333)
+script = ExtResource("prop_s")
+texture = ExtResource("dg_s_recycle")
+
+; a mouse cursor stuck on the heap's slope, still hovering over something nobody clicked
+[node name="dg_a_cursor_2" type="StaticBody2D" parent="."]
+position = Vector2(555, 300)
+script = ExtResource("prop_s")
+texture = ExtResource("dg_a_cursor")
+solid = false
+frames = 4
+fps = 4.0
+
+; a deprecated avatar that slid down the heap, slumped at its foot
+[node name="org_android_sit_3" type="StaticBody2D" parent="."]
 position = Vector2(351, 399)
 script = ExtResource("prop_s")
 texture = ExtResource("org_android_sit")
 
-; head rolled off the heap
-[node name="org_head_2" type="StaticBody2D" parent="."]
+; an avatar head rolled off the heap
+[node name="org_head_4" type="StaticBody2D" parent="."]
 position = Vector2(591, 399)
 script = ExtResource("prop_s")
 texture = ExtResource("org_head")
 
-; arm rolled off the heap, came to rest by the rug
-[node name="org_arm_3" type="StaticBody2D" parent="."]
+; an avatar arm rolled off the heap, came to rest by the rug
+[node name="org_arm_5" type="StaticBody2D" parent="."]
 position = Vector2(360, 486)
 script = ExtResource("prop_s")
 texture = ExtResource("org_arm")
 
 ; cables spilling from the heap
-[node name="org_cables_4" type="StaticBody2D" parent="."]
+[node name="org_cables_6" type="StaticBody2D" parent="."]
 position = Vector2(609, 369)
 script = ExtResource("prop_s")
 texture = ExtResource("org_cables")
 
-; back wall: overflow of the chute heap
-[node name="e_11_5" type="StaticBody2D" parent="."]
+; a 404 dialog that came down the chute with her - her voice is the missing page
+[node name="dg_s_dialog_404_7" type="StaticBody2D" parent="."]
+position = Vector2(429, 381)
+script = ExtResource("prop_s")
+texture = ExtResource("dg_s_dialog_404")
+
+; her own discontinued software box (EOL), dumped beside the rug she wakes on
+[node name="dg_s_softbox_8" type="StaticBody2D" parent="."]
+position = Vector2(628.5, 420)
+script = ExtResource("prop_s")
+texture = ExtResource("dg_s_softbox")
+
+; 127.0.0.1 doormat at the rug's edge: there's no place like home
+[node name="dg_f_home_9" type="StaticBody2D" parent="."]
+position = Vector2(499.5, 504)
+script = ExtResource("prop_s")
+texture = ExtResource("dg_f_home")
+solid = false
+
+; back wall: overflow of the deletion heap
+[node name="dg_e_11_10" type="StaticBody2D" parent="."]
 position = Vector2(322.5, 258)
 script = ExtResource("prop_s")
-texture = ExtResource("e_11")
+texture = ExtResource("dg_e_11")
 
-; back wall: overflow of the chute heap
-[node name="e_5_6" type="StaticBody2D" parent="."]
+; back wall: overflow of the deletion heap
+[node name="dg_e_5_11" type="StaticBody2D" parent="."]
 position = Vector2(708, 273)
 script = ExtResource("prop_s")
-texture = ExtResource("e_5")
+texture = ExtResource("dg_e_5")
 
-; back-left: audio sorting corner
-[node name="c_small2_7" type="StaticBody2D" parent="."]
+; back-left: deprecated audio drivers sorting corner
+[node name="dg_c_small2_12" type="StaticBody2D" parent="."]
 position = Vector2(118.5, 336)
 script = ExtResource("prop_s")
-texture = ExtResource("c_small2")
+texture = ExtResource("dg_c_small2")
 
-; back-left: amps stacked by whoever sorted audio gear
-[node name="t_amp_tower_8" type="StaticBody2D" parent="."]
+; back-left: unsupported .wav drivers stacked by type
+[node name="dg_t_amp_tower_13" type="StaticBody2D" parent="."]
 position = Vector2(235.5, 396)
 script = ExtResource("prop_s")
-texture = ExtResource("t_amp_tower")
+texture = ExtResource("dg_t_amp_tower")
 
-; back-left: speaker leaning on the audio corner
-[node name="s_speaker_9" type="StaticBody2D" parent="."]
+; back-left: speaker driver leaning on the audio corner
+[node name="dg_s_speaker_14" type="StaticBody2D" parent="."]
 position = Vector2(171, 375)
 script = ExtResource("prop_s")
-texture = ExtResource("s_speaker")
+texture = ExtResource("dg_s_speaker")
+
+; a retired meme mascot sitting with the old audio gear - much deleted, very wow
+[node name="dg_s_meme_doge_15" type="StaticBody2D" parent="."]
+position = Vector2(213, 456)
+script = ExtResource("prop_s")
+texture = ExtResource("dg_s_meme_doge")
 
 ; back-left corner fill
-[node name="e_0_10" type="StaticBody2D" parent="."]
+[node name="dg_e_0_16" type="StaticBody2D" parent="."]
 position = Vector2(94.5, 300)
 script = ExtResource("prop_s")
-texture = ExtResource("e_0")
+texture = ExtResource("dg_e_0")
 
-; left wall: storage junk
-[node name="e_1_11" type="StaticBody2D" parent="."]
+; left wall: compressed archives (.zip) of deleted storage
+[node name="dg_e_1_17" type="StaticBody2D" parent="."]
 position = Vector2(51, 438)
 script = ExtResource("prop_s")
-texture = ExtResource("e_1")
+texture = ExtResource("dg_e_1")
 
-; left wall: storage junk
-[node name="e_3_12" type="StaticBody2D" parent="."]
+; a .bak of an old reaction face nobody uses any more
+[node name="dg_s_meme_troll_18" type="StaticBody2D" parent="."]
+position = Vector2(127.5, 522)
+script = ExtResource("prop_s")
+texture = ExtResource("dg_s_meme_troll")
+
+; left wall: compressed archives (.zip) of deleted storage
+[node name="dg_e_3_19" type="StaticBody2D" parent="."]
 position = Vector2(70.5, 567)
 script = ExtResource("prop_s")
-texture = ExtResource("e_3")
+texture = ExtResource("dg_e_3")
+
+; a corner where a tiny burning room keeps saying everything is fine (an unhandled error)
+[node name="dg_a_meme_fine_20" type="StaticBody2D" parent="."]
+position = Vector2(159, 639)
+script = ExtResource("prop_s")
+texture = ExtResource("dg_a_meme_fine")
+frames = 4
+fps = 8.0
 
 ; left wall: storage junk
-[node name="e_7_13" type="StaticBody2D" parent="."]
+[node name="dg_e_7_21" type="StaticBody2D" parent="."]
 position = Vector2(57, 693)
 script = ExtResource("prop_s")
-texture = ExtResource("e_7")
+texture = ExtResource("dg_e_7")
+
+; spam tins swept off the walkway with the rest of the junk mail
+[node name="dg_s_spam_22" type="StaticBody2D" parent="."]
+position = Vector2(235.5, 609)
+script = ExtResource("prop_s")
+texture = ExtResource("dg_s_spam")
 
 ; pushed aside when the walkway was cleared (south side)
-[node name="c_ridge_14" type="StaticBody2D" parent="."]
+[node name="dg_c_ridge_23" type="StaticBody2D" parent="."]
 position = Vector2(249, 744)
 script = ExtResource("prop_s")
-texture = ExtResource("c_ridge")
+texture = ExtResource("dg_c_ridge")
 
-; crates shoved off the walkway
-[node name="t_crates_15" type="StaticBody2D" parent="."]
+; archives shoved off the walkway
+[node name="dg_t_crates_24" type="StaticBody2D" parent="."]
 position = Vector2(471, 690)
 script = ExtResource("prop_s")
-texture = ExtResource("t_crates")
+texture = ExtResource("dg_t_crates")
 
-; back-right: server/tv sorting corner
-[node name="c_small1_16" type="StaticBody2D" parent="."]
+; back-right: legacy servers and dead displays
+[node name="dg_c_small1_25" type="StaticBody2D" parent="."]
 position = Vector2(789, 381)
 script = ExtResource("prop_s")
-texture = ExtResource("c_small1")
+texture = ExtResource("dg_c_small1")
 
 ; back-right corner fill
-[node name="e_9_17" type="StaticBody2D" parent="."]
+[node name="dg_e_9_26" type="StaticBody2D" parent="."]
 position = Vector2(901.5, 321)
 script = ExtResource("prop_s")
-texture = ExtResource("e_9")
+texture = ExtResource("dg_e_9")
 
-; server corner: a TV left on a drum, still powered
-[node name="t_barrel_tv_18" type="StaticBody2D" parent="."]
+; a display left on a bit bucket, still powered
+[node name="dg_t_barrel_tv_27" type="StaticBody2D" parent="."]
 position = Vector2(700.5, 420)
 script = ExtResource("prop_s")
-texture = ExtResource("t_barrel_tv")
+texture = ExtResource("dg_t_barrel_tv")
 
-; front-right: stage leftovers
-[node name="c_mid_19" type="StaticBody2D" parent="."]
+; front-right: leftovers of a virtual stage
+[node name="dg_c_mid_28" type="StaticBody2D" parent="."]
 position = Vector2(801, 753)
 script = ExtResource("prop_s")
-texture = ExtResource("c_mid")
+texture = ExtResource("dg_c_mid")
 
-; front: rack on a pallet waiting to be sorted
-[node name="t_rack_monitor_20" type="StaticBody2D" parent="."]
+; a legacy server on a pallet waiting for the next collection
+[node name="dg_t_rack_monitor_29" type="StaticBody2D" parent="."]
 position = Vector2(615, 708)
 script = ExtResource("prop_s")
-texture = ExtResource("t_rack_monitor")
+texture = ExtResource("dg_t_rack_monitor")
 
 ; front wall: overflow
-[node name="e_8_21" type="StaticBody2D" parent="."]
+[node name="dg_e_8_30" type="StaticBody2D" parent="."]
 position = Vector2(546, 750)
 script = ExtResource("prop_s")
-texture = ExtResource("e_8")
+texture = ExtResource("dg_e_8")
 
 ; right wall below the exit
-[node name="e_10_22" type="StaticBody2D" parent="."]
+[node name="dg_e_10_31" type="StaticBody2D" parent="."]
 position = Vector2(916.5, 735)
 script = ExtResource("prop_s")
-texture = ExtResource("e_10")
+texture = ExtResource("dg_e_10")
 
 ; mic stand dropped beside the walkway
-[node name="s_mic_23" type="StaticBody2D" parent="."]
+[node name="dg_s_mic_32" type="StaticBody2D" parent="."]
 position = Vector2(547.5, 699)
 script = ExtResource("prop_s")
-texture = ExtResource("s_mic")
+texture = ExtResource("dg_s_mic")
 
-; robot legs shoved off the walkway
-[node name="org_legs_24" type="StaticBody2D" parent="."]
+; avatar legs shoved off the walkway
+[node name="org_legs_33" type="StaticBody2D" parent="."]
 position = Vector2(688.5, 690)
 script = ExtResource("prop_s")
 texture = ExtResource("org_legs")
 
-; robot pushed off the walkway, lying on its back
-[node name="org_android_lying_25" type="StaticBody2D" parent="."]
+; a deprecated avatar pushed off the walkway, lying on its back
+[node name="org_android_lying_34" type="StaticBody2D" parent="."]
 position = Vector2(360, 561)
 script = ExtResource("prop_s")
 texture = ExtResource("org_android_lying")
 
-; server rack whose status lights still blink
-[node name="a_rack_26" type="StaticBody2D" parent="."]
+; the garbage collector, parked by the exit between collection cycles - the room's threat
+[node name="dg_s_gcbot_35" type="StaticBody2D" parent="."]
+position = Vector2(867, 393)
+script = ExtResource("prop_s")
+texture = ExtResource("dg_s_gcbot")
+
+; a legacy server whose status lights still blink
+[node name="dg_a_rack_36" type="StaticBody2D" parent="."]
 position = Vector2(651, 357)
 script = ExtResource("prop_s")
-texture = ExtResource("a_rack")
+texture = ExtResource("dg_a_rack")
 frames = 6
 fps = 5.0
 
-; severed power line from the racks, sparking at the walkway edge
-[node name="a_spark_27" type="StaticBody2D" parent="."]
+; severed power line from the servers, sparking at the walkway edge
+[node name="dg_a_spark_37" type="StaticBody2D" parent="."]
 position = Vector2(612, 456)
 script = ExtResource("prop_s")
-texture = ExtResource("a_spark")
+texture = ExtResource("dg_a_spark")
 frames = 8
 fps = 10.0
 
-; TV on the same line, flickering
-[node name="a_tv_28" type="StaticBody2D" parent="."]
+; a display on the same line, flickering an error
+[node name="dg_a_tv_38" type="StaticBody2D" parent="."]
 position = Vector2(267, 471)
 script = ExtResource("prop_s")
-texture = ExtResource("a_tv")
+texture = ExtResource("dg_a_tv")
 frames = 6
 fps = 6.0
 
-; ventilation fan by the exit corridor
-[node name="a_fan_29" type="StaticBody2D" parent="."]
+; cooling fan by the exit corridor
+[node name="dg_a_fan_39" type="StaticBody2D" parent="."]
 position = Vector2(888, 624)
 script = ExtResource("prop_s")
-texture = ExtResource("a_fan")
+texture = ExtResource("dg_a_fan")
 frames = 4
 fps = 12.0
 
+; bugs crawling around the oil leak - every dump has them
+[node name="dg_a_bugs_40" type="StaticBody2D" parent="."]
+position = Vector2(222, 549)
+script = ExtResource("prop_s")
+texture = ExtResource("dg_a_bugs")
+solid = false
+frames = 12
+fps = 8.0
+
 ; work lamp at the walkway's first stretch, next to the sparking line it was plugged into
-[node name="s_worklamp_30" type="StaticBody2D" parent="."]
+[node name="dg_s_worklamp_41" type="StaticBody2D" parent="."]
 position = Vector2(669, 459)
 script = ExtResource("prop_s")
-texture = ExtResource("s_worklamp")
+texture = ExtResource("dg_s_worklamp")
 
 ; work lamp on the last stretch before the exit, in front of the server corner
-[node name="s_worklamp_31" type="StaticBody2D" parent="."]
+[node name="dg_s_worklamp_42" type="StaticBody2D" parent="."]
 position = Vector2(792, 408)
 script = ExtResource("prop_s")
-texture = ExtResource("s_worklamp")
+texture = ExtResource("dg_s_worklamp")
 
-; oil leaking from the storage junk by the left wall
-[node name="f_puddle1_32" type="StaticBody2D" parent="."]
+; oil leaking from the archives by the left wall
+[node name="dg_f_puddle1_43" type="StaticBody2D" parent="."]
 position = Vector2(199.5, 519)
 script = ExtResource("prop_s")
-texture = ExtResource("f_puddle1")
+texture = ExtResource("dg_f_puddle1")
 solid = false
 
-; loose plate kicked off the walkway
-[node name="f_plate1_33" type="StaticBody2D" parent="."]
+; a broken UI window pane kicked off the walkway
+[node name="dg_f_plate1_44" type="StaticBody2D" parent="."]
 position = Vector2(300, 519)
 script = ExtResource("prop_s")
-texture = ExtResource("f_plate1")
+texture = ExtResource("dg_f_plate1")
+solid = false
+
+; a HELLO WORLD printout - the first thing every program says, dropped by the avatar
+[node name="dg_f_hello_45" type="StaticBody2D" parent="."]
+position = Vector2(301.5, 447)
+script = ExtResource("prop_s")
+texture = ExtResource("dg_f_hello")
 solid = false
 
 ; cold light falling through the ceiling chute: a shaft of haze and dust that lands on the rug where she wakes up - the brightest, cleanest spot in the room
@@ -321,24 +415,24 @@ angle = 160
 
 ; status LEDs of the server rack, still blinking
 [node name="RackLEDs" type="Node2D" parent="."]
-position = Vector2(658.5, 360)
+position = Vector2(660, 360)
 script = ExtResource("light_s")
 type = 0
 color = Color(0.4, 0.92, 0.95, 1)
 energy = 0.9
-height = 13.5
+height = 16
 radius = 30
 halo = 0.2
 halo_radius = 3
 
 ; the flickering TV fed by the severed line: its screen throws cyan onto the floor in front of it
 [node name="TVFlicker" type="Node2D" parent="."]
-position = Vector2(264, 474)
+position = Vector2(263.833, 474)
 script = ExtResource("light_s")
 type = 1
 color = Color(0.4, 0.92, 0.95, 1)
 energy = 1.8
-height = 7.5
+height = 8.1
 radius = 46
 direction = Vector3(0, 1, -0.25)
 angle = 150
@@ -346,7 +440,7 @@ halo = 0.3
 halo_radius = 4
 flicker = PackedFloat32Array(0.35, 0.7, 0.35, 1, 0.35, 0)
 flicker_fps = 6
-sync_prop = NodePath("../a_tv_28")
+sync_prop = NodePath("../dg_a_tv_38")
 
 ; the TV left on a drum in the server corner, still powered
 [node name="BarrelTV" type="Node2D" parent="."]
@@ -362,20 +456,35 @@ angle = 150
 halo = 0.2
 halo_radius = 3
 
+; the little burning room in the corner: its flames light the junk around it (everything is fine)
+[node name="MemeFire" type="Node2D" parent="."]
+position = Vector2(170.053, 642)
+script = ExtResource("light_s")
+type = 0
+color = Color(1, 0.62, 0.3, 1)
+energy = 1.4
+height = 12.3
+radius = 40
+halo = 0.35
+halo_radius = 4
+flicker = PackedFloat32Array(1, 0.8, 1, 0.7)
+flicker_fps = 8
+sync_prop = NodePath("../dg_a_meme_fine_20")
+
 ; sparks from the severed power line flash in step with the burst frames
 [node name="Sparks" type="Node2D" parent="."]
-position = Vector2(634.655, 459)
+position = Vector2(634.227, 459)
 script = ExtResource("light_s")
 type = 0
 color = Color(1, 0.88, 0.45, 1)
 energy = 2.6
-height = 8.3
+height = 8.5
 radius = 48
 halo = 0.6
 halo_radius = 5
 flicker = PackedFloat32Array(1, 0.55, 0, 0, 1, 0, 0.55, 0)
 flicker_fps = 10
-sync_prop = NodePath("../a_spark_27")
+sync_prop = NodePath("../dg_a_spark_37")
 
 ; the exit opening in the right wall (native x 306..319, y 120..175)
 [node name="ToElevatorHall" type="Area2D" parent="."]

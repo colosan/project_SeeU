@@ -27,6 +27,7 @@
 ## 자주 쓰는 명령 (Git Bash 기준, 저장소 루트에서)
 - 코드 그림 생성: `python tools/art/gen_junk.py` (없는 파일만 씀, 덮어쓰기는 `--force 파일명`), 미리보기는 `--out=build/art_preview`
 - 발광 마스크(조명): `python tools/art/gen_emission.py` (그림을 만들거나 고친 뒤 항상, `--check`는 보고만)
+- 인터넷 세계판 소품(지하에서 사용): `python tools/art/gen_digital.py` — 소품 의미 사전 [docs/WORLD_PROPS.md](docs/WORLD_PROPS.md)
 - PixelLab 형태 가져오기: `python tools/art/import_pixellab.py`
 - 지하 방 바닥(+ 조명 높이 지도): `python tools/gen_basement_floor.py` / 지하 방 씬: `python tools/layout_basement.py`
 - 엘리베이터 홀: 그림 `python tools/art/gen_elevator.py`, 바닥 `python tools/gen_elevator_hall_floor.py`, 씬 `python tools/layout_elevator_hall.py`

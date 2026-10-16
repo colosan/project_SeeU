@@ -36,6 +36,7 @@
 |---|---|---|
 | `assets/env/basement/code/*.png` | 직접 그림: `tools/art/gen_junk.py` (그리기 키트 `tools/art/pix.py`) | AI 미사용. 재질 램프 색만 사용, 정면 3/4 시점, 외곽선은 실루엣에 한 번. `a_*.png`는 프레임을 가로로 붙인 애니메이션 |
 | `assets/env/basement/code/s_worklamp.png` | 직접 그림, AI 미사용: `tools/art/gen_junk.py`(`work_lamp` 부품) | 삼각대 작업등. 지하 통로 조명의 원천 |
+| `assets/env/basement/digital/dg_*.png` | 직접 그림: `tools/art/gen_digital.py` (+ `digitize.py`, `pixfont.py`), AI 미사용 | 인터넷 속 세계관 판(압축 파일 상자, 비트 버킷, 오류 창, 밈 오마주 등). 각 소품의 의미와 밈 원본은 docs/WORLD_PROPS.md |
 | `assets/env/basement/organic/org_*.png` | PixelLab create_map_object로 형태만 생성 → `tools/art/import_pixellab.py`로 우리 램프 색 재매핑, 잡점 정리, 외곽선 | 원본 id는 `import_pixellab.py`의 `SOURCES`에 기록 (`e4317f37…`, `5a3c7f4b…`, `c6b111a2…`, `b4d0d864…`, `bd0a4172…`, `69afa5f4…`) |
 
 ## 엘리베이터 홀 (저장소에 포함)
