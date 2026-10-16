@@ -24,5 +24,48 @@ d.rectangle((0, 0, 13, H - 1), fill=WALL_TOP); d.line((13, 40, 13, H - 1), fill=
 d.rectangle((W - 14, 0, W - 1, H - 1), fill=WALL_TOP); d.line((W - 15, 40, W - 15, H - 1), fill=EDGE)
 d.rectangle((W - 15, 120, W - 1, 175), fill=FLOOR)        # exit on the right
 d.rectangle((150, 0, 169, 30), fill=WALL); d.rectangle((146, 30, 173, 35), fill=EDGE)  # ceiling chute
+
+# --- cleared walkway from the rug to the exit (native px), with faded hazard dashes on both sides
+PATH = [(160, 146), (166, 166), (192, 178), (236, 172), (276, 154), (319, 148)]
+WALK, DASH, DASH_DARK = (54, 54, 53), (110, 92, 52), (70, 60, 40)
+HALF = 13
+
+
+def samples(pts, step=1.0):
+    out = []
+    for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
+        n = max(1, int(((x1 - x0) ** 2 + (y1 - y0) ** 2) ** 0.5 / step))
+        out += [(x0 + (x1 - x0) * t / n, y0 + (y1 - y0) * t / n) for t in range(n)]
+    return out + [pts[-1]]
+
+
+pts = samples(PATH)
+for x, y in pts:
+    d.ellipse((x - HALF, y - HALF * 0.75, x + HALF, y + HALF * 0.75), fill=WALK)
+for i, (x, y) in enumerate(pts[::2]):
+    if (i // 3) % 2:                                       # dashed edge lines, 3 on / 3 off
+        continue
+    for side in (-1, 1):
+        ex, ey = int(x), int(y + side * (HALF * 0.75 + 1))
+        if 14 <= ex < W - 1 and 64 <= ey < H:
+            d.point((ex, ey), fill=DASH if side < 0 else DASH_DARK)
+
+# --- the old rug SeeU wakes up on (under the chute), frayed and worn
+RUG = (136, 128, 184, 160)
+RUG_BASE, RUG_DARK, RUG_LIGHT, RUG_BORDER = (86, 52, 48), (62, 38, 36), (112, 74, 62), (120, 100, 70)
+x0, y0, x1, y1 = RUG
+d.rectangle(RUG, fill=RUG_BASE)
+d.rectangle((x0 + 2, y0 + 2, x1 - 2, y1 - 2), outline=RUG_BORDER)
+d.rectangle((x0 + 5, y0 + 5, x1 - 5, y1 - 5), outline=RUG_DARK)
+for k in range(0, (x1 - x0) // 2 - 8, 6):                  # simple diamond motif down the middle
+    cx, cy = (x0 + x1) // 2, (y0 + y1) // 2
+    d.polygon([(cx - k - 3, cy), (cx - k, cy - 3), (cx - k + 3, cy), (cx - k, cy + 3)], outline=RUG_LIGHT)
+    d.polygon([(cx + k - 3, cy), (cx + k, cy - 3), (cx + k + 3, cy), (cx + k, cy + 3)], outline=RUG_LIGHT)
+for x in range(x0, x1 + 1, 2):                            # frayed tassels on the short edges
+    d.point((x, y0 - 1), fill=RUG_BORDER); d.point((x + 1, y1 + 1), fill=RUG_BORDER)
+for hx, hy, hw in ((x0 + 8, y1 - 6, 3), (x1 - 12, y0 + 7, 2)):   # worn holes showing the floor
+    d.rectangle((hx, hy, hx + hw, hy + 1), fill=FLOOR)
+d.rectangle((x1 - 6, y1 - 4, x1, y1), fill=WALK)           # one corner folded/missing
+
 im.save('assets/env/basement/room_floor.png')
 print('saved assets/env/basement/room_floor.png')
