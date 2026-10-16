@@ -1,9 +1,18 @@
 """Digital (internet-world) versions of the basement junk + new digital-native props.
 
 The basement is the RECYCLE BIN / garbage-collection zone of a world inside the internet
-(docs/DESIGN.md, docs/WORLD_PROPS.md). Same silhouettes as tools/art/gen_junk.py, but every
-part now tells it is data: archives instead of crates, bit buckets instead of drums, error
-screens, deprecated avatars with unrendered wireframe, de-rezzing corners, missing textures.
+(docs/DESIGN.md, docs/WORLD_PROPS.md). The parts reuse tools/art/gen_junk.py's shapes, but tell
+they are data: archives instead of crates, bit buckets instead of drums, error screens, deprecated
+avatars, de-rezzing corners, a missing texture.
+
+Calm rules (docs/ART_PIPELINE.md 9-10, CLAUDE.md rule 6) for everything placed in the room:
+  * glow only where the story needs it: heaps, stacks and dumped singles are drawn with
+    `calm(lit=False, labels=False)` - dead dark screens, LEDs off, no stencils; tools/art/gen_emission.py
+    lets only STORY_EMITTERS glow;
+  * fewer, bigger things: calm heaps (dheap) have about a quarter of gen_junk's parts plus dim
+    silhouettes of swallowed junk; labels / checker / de-rez are a small room-wide budget;
+  * nothing stands tidy: parts tilt, lie (LIE drawings), fall or flip (rot.py RotSprite rotation around
+    the corner they rest on) and sink into the heap (bury); stacks lean (dstack_lean).
 
   python tools/art/gen_digital.py                      # write any missing files
   python tools/art/gen_digital.py --out=build/art_preview/digital
@@ -11,8 +20,8 @@ screens, deprecated avatars with unrendered wireframe, de-rezzing corners, missi
   python tools/art/gen_digital.py --preview=DIR        # only write preview sheets (3x) to DIR
 
 Never overwrites unless the file name is listed after --force. Never deletes.
-Output names mirror gen_junk with a `dg_` prefix (dg_c_main.png <-> c_main.png) so the room
-layout can swap them 1:1; new props are dg_s_* (single), dg_f_* (walkable floor decal),
+Output names mirror gen_junk with a `dg_` prefix (dg_c_main.png <-> c_main.png; same seeds and
+footprint, so the room layout can swap them); new props are dg_s_* (single), dg_f_* (walkable floor decal),
 dg_a_* (animated strip, frames side by side - see ANIM_INFO for frames/fps), memes contain `meme`.
 Size reference: SeeU is ~37 native px tall (1.65 m) -> 1 px ~ 4.5 cm.
 """
@@ -28,6 +37,7 @@ import digitize as D  # noqa: E402  (registers the corrupt / paper / icon ramps)
 import gen_junk as J  # noqa: E402
 import pixfont as F  # noqa: E402
 from digitize import DPix, Q, checker, derez, float_put, line, spend, wireframe  # noqa: E402
+import rot  # noqa: E402
 from pix import Pix, box  # noqa: E402
 
 OUT_DEFAULT = "assets/env/basement/digital"
@@ -84,6 +94,36 @@ def screen(p, x0, y0, x1, y1, kind, k=0):
         p.hline(x0, x1, cy, "corrupt", 3); p.hline(x0 + 2, x1, cy + 1, "glow", 3)
 
 
+# Calm-glow switches (docs/ART_PIPELINE.md "조용한 빛"). The glow ramp means "this is ON", so only story
+# sources may use it. Heaps, stacks and dumped singles turn both off: their screens are dead dark glass,
+# their LEDs are off, and they carry no stencils/labels (a few story labels are placed on purpose).
+CALM = {"lit": True, "labels": True}
+
+
+class calm:
+    """with calm(lit=False, labels=False): ... - parts drawn inside are dead and unlabelled."""
+
+    def __init__(self, lit=False, labels=False):
+        self.new = {"lit": lit, "labels": labels}
+
+    def __enter__(self):
+        self.old = dict(CALM)
+        CALM.update(self.new)
+
+    def __exit__(self, *a):
+        CALM.update(self.old)
+
+
+def dead_glass(p, x0, y0, x1, y1):
+    """A switched-off screen: dark glass with one soft diagonal reflection (upper-left light). No glow."""
+    p.rect(x0, y0, x1, y1, "plastic", 0)
+    p.hline(x0, x1, y0, "plastic", 1)
+    w, h = x1 - x0 + 1, y1 - y0 + 1
+    for k in range(min(w, h) // 2):
+        p.put(x0 + 1 + k, y1 - 1 - k - (h // 3), "plastic", 2)
+    p.put(x0 + 1, y0 + 1, "steel", 2)
+
+
 def dim_screen(p, x0, y0, x1, y1, cap):
     """Caps every glow step inside the rect (screen brightness for flicker frames)."""
     for y in range(y0, y1 + 1):
@@ -96,33 +136,40 @@ def dim_screen(p, x0, y0, x1, y1, cap):
 # =============================================================== reinterpreted gen_junk parts
 # Same signatures and silhouettes as gen_junk: fn(p, x, y, r) -> (top-face bbox, width).
 
-def archive(p, x, y, r):
+def archive(p, x, y, r, size=None):
     """crate -> compressed archive: zipper over the lid and down the front, compression straps.
     rng: same calls as gen_junk.crate (size, label roll)."""
     w, d, h = r.choice([(14, 5, 11), (12, 4, 9), (16, 5, 10)])
+    if size:
+        w, d, h = size
     tagged = r.random() < 0.5
     bx = box(p, x, y, w, d, h, "card", front=2, top=3)
     ft = y - h + 1
     zx = x + w // 2 - 1
+    hi, lo = (3, 1) if CALM["labels"] else (2, 1)                        # calm: a quieter zipper
     for yy in range(ft - d + 1, y):
         a = yy % 2 == 0
-        p.put(zx, yy, "steel", 3 if a else 1)
-        p.put(zx + 1, yy, "steel", 1 if a else 3)
-    p.rect(zx, ft, zx + 1, ft + 1, "steel", 4)                           # slider
+        p.put(zx, yy, "steel", hi if a else lo)
+        p.put(zx + 1, yy, "steel", lo if a else hi)
+    p.rect(zx, ft, zx + 1, ft + 1, "steel", 4 if CALM["labels"] else 3)  # slider
     p.put(zx, ft + 2, "steel", 2); p.put(zx, ft + 3, "steel", 3)        # pull tab
     sy = y - h // 2 + 1
     p.hline(x + 1, zx - 1, sy, "card", 1); p.hline(zx + 2, x + w - 2, sy, "card", 1)
-    if tagged and Q().random() < 0.7:
+    if tagged and Q().random() < 0.7 and CALM["labels"]:
         p.rect(x + 2, ft + 2, x + 4, ft + 3, "paper", 4)                 # file tag
     return bx, w
 
 
-def driver_amp(p, x, y, r):
+def driver_amp(p, x, y, r, size=None):
     """amp -> deprecated audio driver: a WAV sticker or a flat-lined waveform display."""
-    w, d, h = 14, 5, 18
+    w, d, h = size or (14, 5, 18)
     q = Q()
     bx = box(p, x, y, w, d, h, "plastic", front=2, top=3)
-    if q.random() < 0.5:
+    if not CALM["lit"] and not CALM["labels"]:                           # dumped: plain grille, knobs, no light
+        p.hline(x + 2, x + w - 3, y - h + 3, "steel", 2)
+        p.put(x + 3, y - h + 3, "steel", 3); p.put(x + 6, y - h + 3, "steel", 3)
+        cx, cy, rr = x + w // 2 - 1, y - h // 3, (w - 5) / 2
+    elif q.random() < 0.5:
         F.label(p, x, y - h + 2, "WAV", plate=("paper", 3), ink=("paper", 1))
         cx, cy, rr = x + w // 2 - 1, y - 5, 3.6
     else:
@@ -146,17 +193,19 @@ def driver_speaker(p, x, y, r):
         p.ellipse(x + 4, cy, rr, rr, "steel", 1)
         p.ellipse(x + 4, cy, rr - 1.2, rr - 1.2, "rubber", 2)
     for i, dy in enumerate((0, -1, -1, 0, 1, 1, 0)):                    # printed sine decal
-        p.put(x + 1 + i, y - 11 + dy, "shell", 4)
+        p.put(x + 1 + i, y - 11 + dy, "shell", 4 if CALM["labels"] else 1)
     if spend("derez"):
         rr_ = _rr(Q())
         p.post.append(lambda q: derez(q, x + 7, y - h - d, rr_, size=4, drift=(1, -1), n_bits=3))
     return bx, w
 
 
-def legacy_rack(p, x, y, r):
+def legacy_rack(p, x, y, r, size=None):
     """rack -> legacy server: a half-pulled drive caddy, a dangling network cable, red fault LED.
     rng: same calls as gen_junk.rack (height, one LED roll per slot)."""
     w, d, h = 12, 4, r.choice([24, 27])
+    if size:
+        w, d, h = size
     q = Q()
     bx = box(p, x, y, w, d, h, "steel", front=1, top=3)
     slots = list(range(y - h + 3, y - 1, 3))
@@ -169,7 +218,11 @@ def legacy_rack(p, x, y, r):
             continue
         p.hline(x + 2, x + w - 3, yy, "plastic", 1)
         if led:
-            p.put(x + w - 4, yy, "redp" if q.random() < 0.25 else "glow", 4 if q.random() < 0.5 else 3)
+            red, bright = q.random() < 0.25, q.random() < 0.5
+            if CALM["lit"]:
+                p.put(x + w - 4, yy, "redp" if red else "glow", 4 if bright else 3)
+            else:
+                p.put(x + w - 4, yy, "plastic", 2)                       # dead LED
     if q.random() < 0.6:                                                  # network cable hanging out of a port
         py = q.choice(slots[:-2])
         p.put(x + 3, py, "shell", 3)
@@ -178,13 +231,17 @@ def legacy_rack(p, x, y, r):
     return bx, w
 
 
-def err_tv(p, x, y, r, kind=None):
+def err_tv(p, x, y, r, kind=None, size=None):
     """tv -> error screen (dialog, loading ring, crash face, stuck bar or no signal)."""
-    w, d, h = 13, 6, 11
+    w, d, h = size or (13, 6, 11)
     q = Q()
     bx = box(p, x, y, w, d, h, "plastic", front=2, top=3)
     kind = kind or q.choice(["err", "err", "spin", "sad", "bar", "dead"])
-    screen(p, x + 2, y - h + 3, x + w - 4, y - 2, kind, q.randint(0, 7))
+    k = q.randint(0, 7)
+    if CALM["lit"]:
+        screen(p, x + 2, y - h + 3, x + w - 4, y - 2, kind, k)
+    else:
+        dead_glass(p, x + 2, y - h + 3, x + w - 4, y - 2)
     return bx, w
 
 
@@ -195,7 +252,11 @@ def err_monitor(p, x, y, r, kind=None):
     r.choice([1, 2])
     bx = box(p, x, y - 3, w, d, h, "plastic", front=1, top=3)
     kind = kind or q.choice(["404", "err", "spin", "sad", "bar", "ERR", "cursor", "dead"])
-    screen(p, x + 1, y - h - 1, x + w - 3, y - 5, kind, q.randint(0, 7))
+    k = q.randint(0, 7)
+    if CALM["lit"]:
+        screen(p, x + 1, y - h - 1, x + w - 3, y - 5, kind, k)
+    else:
+        dead_glass(p, x + 1, y - h - 1, x + w - 3, y - 5)
     p.rect(x + 5, y - 2, x + 8, y, "plastic", 2)
     return (x, bx[1], x + w - 1, y), w
 
@@ -205,7 +266,7 @@ def avatar_head(p, x, y, r):
     p.ellipse(x + 5, y - 5, 5.5, 5, "shell", 3)
     p.ellipse(x + 4, y - 7, 2.5, 1.5, "shell", 4)
     p.rect(x + 1, y - 5, x + 9, y - 3, "plastic", 1)
-    if r.random() < 0.5:
+    if r.random() < 0.5 and CALM["lit"]:
         p.put(x + 3, y - 4, "glow", 4)
     if spend("wire"):
         tag = p.tag
@@ -220,7 +281,7 @@ def avatar_torso(p, x, y, r):
     bx = box(p, x, y, w, d, h, "shell", front=2, top=3)
     p.rect(x + 3, y - 8, x + 10, y - 4, "shell", 1)
     for i, dy in enumerate((0, -1, -1, 0, 1, 1, 0, -1)):
-        p.put(x + 3 + i, y - 6 + dy, "shell", 4)
+        p.put(x + 3 + i, y - 6 + dy, "shell", 4 if CALM["labels"] else 3)
     p.rect(x - 3, y - 9, x - 1, y - 3, "shell", 2); p.rect(x + w, y - 9, x + w + 2, y - 3, "shell", 1)
     t = Q().random()
     tag = p.tag
@@ -247,7 +308,7 @@ def disc_stack(p, x, y, r):
     p.ellipse(x + 7, top - 0.3, 5.2, 2.6, "steel", 4)
     p.ellipse(x + 7, top, 4.2, 2.0, "steel", 3)
     p.ellipse(x + 7, top, 2.2, 1.2, "steel", 2)                          # hub
-    p.put(x + 3, top - 2, "tarp", 4); p.put(x + 4, top - 2, "glow", 1)   # rainbow-ish sheen, muted
+    p.put(x + 3, top - 2, "tarp", 4); p.put(x + 4, top - 2, "glow" if CALM["lit"] else "tarp", 1)   # muted sheen
     line(p, x + 9, top + 2, x + 11, top + 1, "steel", 2)                 # scratch
     p.vline(x + 7, top - 3, top, "steel", 3)                              # spindle
     p.put(x + 7, top - 4, "steel", 4)
@@ -269,11 +330,14 @@ def pipeline(p, x, y, r):
             p.vline(fx, yy - 4, yy, "steel", 3); p.vline(fx + 1, yy - 4, yy, "steel", 1)
         gx = x0 + 3 + q.randint(0, 3)
         k = q.randint(0, 3)
-        if i == lit:
+        if i == lit and CALM["lit"]:
             p.rect(gx, yy - 2, gx + 4, yy - 1, "glow", 1)                 # sight glass
             p.put(gx + k, yy - 2, "glow", 4); p.put(gx + k + 1, yy - 2, "glow", 3)   # a packet passing
         p.ellipse(x0, yy - 2, 2, 2.5, "steel", 1)
-        p.put(x0, yy - 2, "glow", 2 if i == 0 else 1)                     # light inside the open end
+        if CALM["lit"]:
+            p.put(x0, yy - 2, "glow", 2 if i == 0 else 1)                 # light inside the open end
+        else:
+            p.put(x0, yy - 2, "plastic", 0)                               # dark open end
     return (x, y - n * 5, x + w, y), w
 
 
@@ -288,10 +352,14 @@ def bit_bucket(p, x, y, r):
     cx = x + w / 2 - 0.5
     p.ellipse(cx, y - h + 2, w / 2, 2.2, "steel", 3)
     p.ellipse(cx, y - h + 2, w / 2 - 1.6, 1.1, "plastic", 0)
-    for k, s_ in enumerate((1, 2, 1, 1, 3, 1, 2)):                        # a pool of bits
-        p.put(x + 2 + k, y - h + 2 + (k % 2), "glow", s_)
-    F.text(p, x + 2, y - h + 7, "01", "paper", 3)
-    if spend("bits"):
+    if CALM["lit"]:
+        for k, s_ in enumerate((1, 2, 1, 1, 3, 1, 2)):                    # a pool of bits
+            p.put(x + 2 + k, y - h + 2 + (k % 2), "glow", s_)
+    else:
+        p.hline(x + 3, x + 6, y - h + 2, "plastic", 1)                    # dead bits: a dark heap inside
+    if CALM["labels"]:
+        F.text(p, x + 2, y - h + 7, "01", "paper", 3)
+    if CALM["lit"] and spend("bits"):
         bx0 = int(cx)
 
         def bits(q):
@@ -307,26 +375,38 @@ def leak_tank(p, x, y, r):
     into a puddle at its foot. rng: same call as gen_junk.tank (material)."""
     w, h = 16, 20
     mat = r.choice(["steel", "redp"])
+    if not CALM["lit"] and Q().random() < 0.7:                           # calm heaps: mostly plain steel
+        mat = "steel"
     p.rect(x, y - h + 4, x + w - 1, y, mat, 2)
     p.vline(x + 2, y - h + 5, y - 1, mat, 3); p.vline(x + w - 1, y - h + 4, y, mat, 1)
     p.ellipse(x + w / 2 - 0.5, y - h + 3, w / 2, 3, mat, 3)
     p.rect(x + 6, y - h - 1, x + 9, y - h + 1, "steel", 2)
-    if Q().random() < 0.5:
+    stencil = Q().random() < 0.5
+    if stencil and CALM["labels"]:
         p.hline(x + 1, x + w - 2, y - 13, "warn", 3)
         F.text(p, x + 3, y - 11, "MEM", "warn", 3)
     else:
-        p.rect(x + 3, y - 10, x + 12, y - 7, "warn", 3)
+        p.rect(x + 3, y - 10, x + 12, y - 7, "warn", 3 if CALM["labels"] else 1)
     cx = x + 11
     for dx, dy in ((0, -5), (1, -4), (0, -3)):
         p.put(cx + dx, y + dy, mat, 0)
-    p.put(cx, y - 2, "glow", 2); p.put(cx, y - 1, "glow", 3)
-    p.hline(cx - 3, cx + 3, y, "glow", 1); p.hline(cx - 1, cx + 1, y, "glow", 2)
+    if CALM["lit"]:
+        p.put(cx, y - 2, "glow", 2); p.put(cx, y - 1, "glow", 3)
+        p.hline(cx - 3, cx + 3, y, "glow", 1); p.hline(cx - 1, cx + 1, y, "glow", 2)
+    else:
+        p.put(cx, y - 2, "oil", 2); p.put(cx, y - 1, "oil", 2)           # a dried, dark leak stain
     return (x, y - h - 1, x + w - 1, y), w
 
 
 def stage_chair(p, x, y, r):
     """chair -> abandoned virtual-stage chair: missing-texture seat or a dissolving back rest."""
     bx, w = J.chair(p, x, y, r)
+    if not CALM["lit"]:                                                  # dumped: no red accent (a fallen red
+        for yy in range(bx[1], bx[3] + 1):                               # chair reads as a glyph in the light)
+            for xx in range(bx[0], bx[2] + 1):
+                v = p.get(xx, yy)
+                if v and v[0] == "redp":
+                    p.put(xx, yy, "steel", v[1])
     t = Q().random()
     if t < 0.3 and spend("corrupt"):
         checker(p, x, y - 8, x + 10, y - 6)
@@ -367,8 +447,12 @@ def projector(p, x, y, r):
     w, d, h = 9, 5, 8
     bx = box(p, x, y, w, d, h, "steel", front=2, top=3)
     p.ellipse(x + 4, y - 4, 3, 3, "plastic", 1)
-    p.ellipse(x + 4, y - 4, 2, 2, "glow", 1)
-    p.put(x + 3, y - 5, "glow", 3)
+    if CALM["lit"]:
+        p.ellipse(x + 4, y - 4, 2, 2, "glow", 1)
+        p.put(x + 3, y - 5, "glow", 3)
+    else:
+        p.ellipse(x + 4, y - 4, 2, 2, "plastic", 0)
+        p.put(x + 3, y - 5, "steel", 3)                                    # dead lens, one glint
     return bx, w
 
 
@@ -392,8 +476,12 @@ def ui_pane(p, x, y, r):
 def synth_dg(p, x, y, r):
     """synth -> keyboard of a sound module: tiny LCD with one waveform pixel lit."""
     bx, w = J.synth(p, x, y, r)
-    p.rect(x + w - 7, y - 2, x + w - 3, y - 1, "glow", 1)
-    p.put(x + w - 5, y - 2, "glow", 3)
+    if CALM["lit"]:
+        p.rect(x + w - 7, y - 2, x + w - 3, y - 1, "glow", 1)
+        p.put(x + w - 5, y - 2, "glow", 3)
+    else:
+        p.rect(x + w - 7, y - 2, x + w - 3, y - 1, "plastic", 0)          # LCD off
+        p.put(x + w - 3, y - 2, "plastic", 0)                              # (and the gen_junk LED)
     return bx, w
 
 
@@ -644,90 +732,424 @@ REINTERPRETED = {  # gen_junk kind -> (digital meaning) for the before/after she
     "spot": "hologram projector", "plate": "broken UI window pane", "synth": "sound module keyboard",
 }
 
-DTHEMES = J.THEMES          # same kind lists as gen_junk: the rng sequence and composition stay identical
+DTHEMES = J.THEMES          # same kind lists as gen_junk (calm heaps drop HEAP_SKIP kinds)
 ALL_KINDS = J.ALL_KINDS
 
 
-def draw(p, kind, x, y, r):
-    p.new_tag(kind)
-    out = (DPARTS.get(kind) or NEW_PARTS[kind])(p, x, y, r)
-    p.tag = None
-    return out
-
-
-def _budget(w):
-    D.BUDGET.update(subst=1, corrupt=0 if w < 90 else 1 if w < 180 else 2,
-                    wire=1 if w < 110 else 2, derez=1 if w < 110 else 2, bits=1 if w < 140 else 2)
-
-
 def pile_derez(p, r, n):
+    """n quiet de-rez spots on a pile's top contour (no glowing data bits: a rare accent, not a light)."""
     for x, y in D.contour_spots(p, n, r):
-        derez(p, x, y, r, size=r.choice([4, 6]), drift=(r.choice([-1, 1]), -1))
+        derez(p, x, y, r, size=4, drift=(r.choice([-1, 1]), -1), n_bits=2, data=False)
 
 
-# =============================================================== piles (mirror gen_junk.mound / stack)
+# =============================================================== lying drawings
+# Boxy things that fell over get their own drawing in the front-on 3/4 view (top face + front face),
+# instead of a 90 deg turn that would show the old top face as an isometric side face. Same signature
+# as the parts: fn(p, x, y, r) -> (bbox, width), (x, y) = front-bottom-left. Always dead (no glow).
 
-def dmound(seed, kinds, n=16, w=120, h=84, peak=30):
-    """gen_junk.mound with digital parts, then 1-3 purposeful de-rez spots on the heap's top."""
+def lie_archive(p, x, y, r, size=None):
+    """Archive knocked onto its side: wide and low, the zipper now runs along the front, the
+    compression strap stands up."""
+    w, d, h = size or r.choice([(16, 5, 9), (14, 4, 8), (18, 5, 10)])
+    bx = box(p, x, y, w, d, h, "card", front=2, top=3)
+    zy = y - h // 2
+    for xx in range(x + 1, x + w - 1):
+        p.put(xx, zy, "steel", 2 if xx % 2 == 0 else 1)
+    p.rect(x + 3, zy - 1, x + 4, zy, "steel", 3)                          # slider
+    sx = x + w // 2 + 2
+    p.vline(sx, y - h + 2, y - 1, "card", 1)                              # strap, vertical now
+    p.vline(sx, y - h - d + 2, y - h, "card", 2)
+    return bx, w
+
+
+def lie_amp(p, x, y, r, size=None):
+    """Audio driver on its back: the speaker faces the ceiling (a foreshortened cone on the top face)."""
+    w, d, h = size or (14, 10, 6)
+    bx = box(p, x, y, w, d, h, "plastic", front=2, top=3)
+    tt = y - h + 1 - d
+    cx, cy = x + w // 2 - 1, tt + d // 2 + 1
+    p.ellipse(cx, cy, (w - 5) / 2, d * 0.26, "steel", 1)
+    p.ellipse(cx, cy, (w - 8) / 2, d * 0.16, "rubber", 2)
+    p.put(cx, cy, "rubber", 0); p.put(cx - 2, cy - 1, "steel", 3)
+    p.hline(x + 2, x + w - 3, tt + 1, "steel", 2)                         # control strip, far edge now
+    p.put(x + 1, y - 1, "rubber", 0); p.put(x + w - 3, y - 1, "rubber", 0)   # feet on the panel facing us
+    return bx, w
+
+
+def lie_speaker(p, x, y, r):
+    """Speaker fallen on its side: the cones now sit side by side."""
+    w, d, h = 22, 4, 10
+    bx = box(p, x, y, w, d, h, "plastic", front=2, top=3)
+    for cx, rr in ((x + 6, 3.8), (x + 15, 3.2)):
+        p.ellipse(cx, y - 5, rr, rr, "steel", 1)
+        p.ellipse(cx, y - 5, rr - 1.2, rr - 1.2, "rubber", 2)
+    return bx, w
+
+
+def lie_rack(p, x, y, r, size=None):
+    """Legacy server fallen on its side: long and low, drive slots standing upright, all lights out."""
+    w, d, h = size or (r.choice([24, 27]), 4, 12)
+    bx = box(p, x, y, w, d, h, "steel", front=1, top=3)
+    slots = list(range(x + 3, x + w - 2, 3))
+    pulled = Q().choice(slots[1:-1])
+    for xx in slots:
+        if xx == pulled:                                                  # one caddy half out
+            p.vline(xx - 1, y - h + 2, y - 1, "steel", 3); p.vline(xx, y - h + 2, y - 1, "plastic", 2)
+            continue
+        p.vline(xx, y - h + 3, y - 2, "plastic", 1)
+    return bx, w
+
+
+def lie_tv(p, x, y, r, size=None):
+    """CRT on its back: the dead screen faces up (dark glass on the top face), vents toward us."""
+    w, d, h = size or (13, 8, 6)
+    bx = box(p, x, y, w, d, h, "plastic", front=2, top=3)
+    tt = y - h + 1 - d
+    p.rect(x + 2, tt + 1, x + w - 4, tt + d - 2, "plastic", 0)
+    p.hline(x + 2, x + w - 4, tt + 1, "plastic", 1)
+    p.put(x + 3, tt + d - 3, "plastic", 2); p.put(x + 4, tt + d - 4, "plastic", 2)
+    for xx in range(x + 2, x + w - 3, 2):
+        p.put(xx, y - 2, "plastic", 1)
+    return bx, w
+
+
+def lie_monitor(p, x, y, r):
+    """Flat monitor fallen on its face: a slab with the stand sticking up from its back."""
+    w, d, h = 14, 7, 3
+    bx = box(p, x, y, w, d, h, "plastic", front=1, top=3)
+    tt = y - h + 1 - d
+    p.rect(x + 6, tt - 3, x + 7, tt + 3, "plastic", 2)                    # neck
+    box(p, x + 3, tt - 3, 8, 2, 1, "plastic", front=2, top=3)            # foot plate
+    return (x, tt - 6, x + w - 1, y), w
+
+
+def _cylinder_side(p, x, y, w, h, mat, bands=(), dark=1):
+    """A drum / tank lying with its axis left-right: lit from above, rounded ends, raised bands."""
+    for yy in range(y - h + 1, y + 1):
+        t = (yy - (y - h + 1)) / max(1, h - 1)
+        s = 4 if t < 0.12 else 3 if t < 0.42 else 2 if t < 0.78 else dark
+        p.hline(x, x + w - 1, yy, mat, s)
+    for bxx in bands:
+        p.vline(x + bxx, y - h + 2, y - 1, mat, 3); p.vline(x + bxx + 1, y - h + 2, y - 1, mat, 1)
+    p.vline(x, y - h + 2, y - 1, mat, 3)
+    p.vline(x + w - 1, y - h + 2, y - 1, mat, 1)
+    for cx_ in (x, x + w - 1):                                             # rounded ends
+        p.clear(cx_, y - h + 1)
+        p.clear(cx_, y)
+
+
+def lie_barrel(p, x, y, r):
+    """Bit bucket rolled onto its side."""
+    w, h = 15, 11
+    _cylinder_side(p, x, y, w, h, "steel", bands=(4, w - 6))
+    return (x, y - h + 1, x + w - 1, y), w
+
+
+def lie_tank(p, x, y, r):
+    """Memory-leak tank lying on its side, valve stub at the end, hazard band dulled."""
+    w, h = 20, 13
+    mat = "redp" if r.random() < 0.25 else "steel"                       # a rare faded-red one
+    _cylinder_side(p, x, y, w, h, mat, bands=(5, 13))
+    p.rect(x + w, y - 8, x + w + 1, y - 5, "steel", 2)
+    return (x, y - h + 1, x + w + 1, y), w + 2
+
+
+def lie_torso(p, x, y, r):
+    """Voice-model body on its back: chest panel and sound-wave emblem face up, arms at its sides."""
+    w, d, h = 14, 8, 5
+    bx = box(p, x, y, w, d, h, "shell", front=2, top=3)
+    tt = y - h + 1 - d
+    p.rect(x + 3, tt + 2, x + 10, tt + 5, "shell", 1)
+    for i, dy in enumerate((0, -1, 0, 1, 0, -1, 0, 1)):
+        p.put(x + 3 + i, tt + 4 + dy, "shell", 3)
+    p.rect(x - 3, tt + 2, x - 1, tt + 6, "shell", 2); p.rect(x + w, tt + 2, x + w + 2, tt + 6, "shell", 1)
+    return bx, w + 3
+
+
+def lie_softbox(p, x, y, r):
+    """Her discontinued software box lying on its back: the cover faces up (title, waveform, the EOL
+    sticker), the box's spine toward us."""
+    w, d, h = 16, 12, 4
+    bx = box(p, x, y, w, d, h, "tarp", front=1, top=3)
+    tt = y - h + 1 - d
+    p.hline(x + 2, x + 8, tt + 1, "paper", 4); p.hline(x + 2, x + 6, tt + 2, "paper", 3)   # title
+    for i, hb in enumerate((1, 2, 3, 2, 3, 1, 2, 1)):                     # waveform (foreshortened)
+        p.vline(x + 9 + (i % 6), tt + 3 - hb // 2, tt + 3, "shell", 4 if i % 2 == 0 else 3)
+    for k in range(4):                                                    # discontinued ribbon on the corner
+        p.put(x + w - 5 + k, tt + k, "redp", 3); p.put(x + w - 4 + k, tt + k, "redp", 4)
+    F.label(p, x + 2, tt + 4, "EOL", plate=("paper", 4), ink=("redp", 2))
+    p.hline(x + 1, x + w - 3, y - 2, "tarp", 2)                           # spine stripe
+    return bx, w
+
+
+LIE = {"crate": lie_archive, "amp": lie_amp, "speaker": lie_speaker, "rack": lie_rack, "tv": lie_tv,
+       "monitor": lie_monitor, "barrel": lie_barrel, "tank": lie_tank, "rtorso": lie_torso}
+
+# How each kind comes to rest in a heap: tilt (8..40 deg on its contact corner), lie (lying drawing,
+# 0..12 deg), fall (on its side, 65..95 deg), flip (upside down, 180 +- 20 deg), slump (long thin
+# things lying along the heap, 3..14 deg - steep sticks crossing everywhere read as noise).
+POSES = {
+    "crate": (("tilt", 5), ("lie", 4)), "amp": (("tilt", 4), ("lie", 5)), "speaker": (("tilt", 4), ("lie", 5)),
+    "rack": (("tilt", 4), ("lie", 5)), "tv": (("tilt", 5), ("lie", 4)), "monitor": (("tilt", 4), ("lie", 5)),
+    "barrel": (("tilt", 4), ("lie", 5)), "tank": (("tilt", 3), ("lie", 6)), "rtorso": (("tilt", 4), ("lie", 5)),
+    "rhead": (("tilt", 5), ("flip", 4)), "chair": (("tilt", 3), ("fall", 4), ("flip", 4)),
+    "ladder": (("fall", 6),), "truss": (("slump", 6),), "mic": (("fall", 1),),
+    "plate": (("slump", 6),), "pipes": (("slump", 6),), "spot": (("tilt", 4), ("flip", 4)),
+    "fan": (("tilt", 5), ("flip", 2)), "pallet": (("tilt", 6),), "synth": (("tilt", 6),), "tire": (("tilt", 6),),
+    "bag": (("tilt", 1),),
+}
+HEAP_SKIP = {"mic", "tire", "bag", "synth"}   # thin / tiny / soft / comb-patterned kinds only add noise to a calm heap
+CALM_PARTS = {"crate": archive}          # no substitutions in calm heaps: archives stay archives
+
+
+def _pix_bbox(p):
+    pts = [(x, y) for y in range(p.h) for x in range(p.w) if p.px[y][x] is not None]
+    if not pts:
+        return None
+    return (min(x for x, _ in pts), min(y for _, y in pts), max(x for x, _ in pts), max(y for _, y in pts))
+
+
+def _wchoice(r, opts):
+    t = r.uniform(0, sum(w for _o, w in opts))
+    for o, w in opts:
+        t -= w
+        if t <= 0:
+            return o
+    return opts[-1][0]
+
+
+BIG = {  # (kind, lying): size of the big variant - a few big shapes give each heap its size hierarchy
+    ("crate", False): (22, 6, 14), ("crate", True): (24, 6, 11), ("tv", False): (18, 7, 14), ("tv", True): (18, 10, 8),
+    ("amp", False): (18, 6, 22), ("amp", True): (18, 12, 7), ("rack", False): (15, 5, 34), ("rack", True): (34, 5, 14),
+}
+
+
+def posed(kind, r, side=1, pose=None, angle=None, lit=False, fn=None, checker_patch=False, big=False, shade=0):
+    """Draw one part alone and bring it to rest: returns (Pix, contact) where contact is the continuous
+    point (in the Pix frame) that touches the ground/heap - the pivot corner for tilts and falls, the
+    bottom centre for flips. side = which way is downhill (-1 left, +1 right); 70% lean that way.
+    big: draw the big variant (BIG) when the kind has one; shade: darken every step by this much (junk
+    deep inside a heap reads as dim silhouettes, not as more detail)."""
+    pose = pose or _wchoice(r, POSES.get(kind, (("tilt", 1),)))
+    c = DPix(110, 110)
+    c.new_tag(kind)
+    kw = {"size": BIG[(kind, pose == "lie")]} if big and (kind, pose == "lie") in BIG and fn is None else {}
+    with calm(lit=lit, labels=False):
+        if fn is None:
+            fn = LIE[kind] if pose == "lie" and kind in LIE else (CALM_PARTS.get(kind) or DPARTS.get(kind) or NEW_PARTS[kind])
+        fn(c, 42, 80, r, **kw)
+    c.tag, c.post = None, []
+    if shade:
+        for row in c.px:
+            for i, v in enumerate(row):
+                if v is not None:
+                    row[i] = (v[0], max(1, v[1] - shade))
+    x0, y0, x1, y1 = _pix_bbox(c)
+    if checker_patch:                                                       # the room's one missing texture
+        my = (y0 + y1) // 2
+        checker(c, x0 + 2, my - 2, min(x1 - 2, x0 + 7), my + 1)
+    if angle is None:
+        sgn = side if r.random() < 0.7 else -side
+        angle = {"tilt": lambda: sgn * r.uniform(8, 40), "lie": lambda: sgn * r.uniform(0, 12),
+                 "fall": lambda: sgn * r.uniform(80, 95), "flip": lambda: 180 + r.uniform(-20, 20),
+                 "slump": lambda: side * r.uniform(3, 14)}[pose]()
+    if pose == "flip" or abs(angle) > 120:
+        pivot = ((x0 + x1 + 1) // 2, (y0 + y1 + 1) // 2)
+    else:
+        pivot = (x1 + 1, y1 + 1) if angle > 0 else (x0, y1 + 1)
+    q, (ox, oy) = rot.rotate(c, angle, pivot) if abs(angle) >= 1 else (c, (0, 0))
+    if pose == "flip" or abs(angle) > 120:
+        bx0, _by0, bx1, by1 = _pix_bbox(q)
+        return q, ((bx0 + bx1 + 1) // 2, by1 + 1)
+    return q, (pivot[0] - ox, pivot[1] - oy)
+
+
+def paste_at(p, q, contact, X, Y):
+    """Paste q so its contact point lands on (X, Y) of p; returns the set of p pixels it wrote."""
+    dx, dy = int(round(X - contact[0])), int(round(Y - contact[1]))
+    wrote = []
+    for v in range(q.h):
+        for u in range(q.w):
+            val = q.px[v][u]
+            if val is not None and 0 <= u + dx < p.w and 0 <= v + dy < p.h:
+                p.put(u + dx, v + dy, *val)
+                wrote.append((u + dx, v + dy))
+    return wrote
+
+
+def bury(p, pts, line, r, rim=True):
+    """Sink a part into the heap: every pixel of the part below the debris line line(x) becomes heap
+    body (dark scrap), with a lit crest on the debris edge, so the part reads as half swallowed."""
+    cols = {}
+    for x, y in pts:
+        if y > line(x):
+            cols.setdefault(x, []).append(y)
+    for x, ys in cols.items():
+        top = min(ys)
+        for y in ys:
+            p.put(x, y, "plastic", 1)
+        if rim:
+            p.put(x, top, "plastic", 2)
+
+
+def debris_skirt(p, x0, x1, y, hgt, r, mats=(("plastic", 1), ("rubber", 1))):
+    """A low lumpy bank of dark scrap on the floor from x0 to x1 (base row y, up to hgt high) - what a
+    dumped single sinks into or rests on. Lit crest, no speckle."""
+    ph = r.uniform(0, 6.3)
+    mid = (x0 + x1) / 2
+    half = max(1, (x1 - x0) / 2)
+    for x in range(x0, x1 + 1):
+        k = max(0.0, 1 - abs(x - mid) / half) ** 0.6
+        top = int(round(y - hgt * k - 0.8 * math.sin(x * 0.7 + ph)))
+        if top > y:
+            continue
+        for yy in range(top, y + 1):
+            p.put(x, yy, *mats[0])
+        p.put(x, top, mats[0][0], mats[0][1] + 1)
+
+
+# =============================================================== calm heaps (fewer, bigger, tumbled)
+
+def dheap(seed, kinds, n=6, w=120, peak=30, derez=0, checker_at=None, spills=None):
+    """A heap of deleted data: one big quiet dark mass with a few large things tumbled into it.
+    Every part lies, tilts, falls or is upside down (never upright); most are half buried in the heap;
+    a couple slid out at the foot. Screens are dead, LEDs off, no labels (calm-glow rule).
+    derez = quiet de-rez spots on the top (room budget: a few in total); checker_at = index of the part
+    that gets the room's one missing-texture patch."""
     r = random.Random(seed)
     D.reseed(seed)
-    _budget(w)
-    head = 12                                                              # air above for drifting bits
-    h += 10
-    p = DPix(w, h + head)
-    ground = h + head - 12
+    D.BUDGET.update(subst=0, corrupt=0, wire=0, derez=0, bits=0)
+    kinds = [k for k in kinds if k not in HEAP_SKIP] or ["crate"]
+    head = 34                                                               # room for things sticking up
+    H = peak + head + 16
+    p = DPix(w, H)
+    ground = H - 8
     cx = w / 2 + r.uniform(-w * 0.12, w * 0.12)
-    phase, phase2 = r.uniform(0, 6.3), r.uniform(0, 6.3)
+    ph1, ph2, ph3 = r.uniform(0, 6.3), r.uniform(0, 6.3), r.uniform(0, 6.3)
 
     def foot(x):
-        return int(ground + 3 * math.sin(x * 0.09 + phase) + 2 * math.sin(x * 0.23 + phase2))
+        return int(ground + 2 * math.sin(x * 0.09 + ph1) + 1.5 * math.sin(x * 0.23 + ph2))
 
-    spots = []
-    for _ in range(n):
-        x = r.gauss(cx, w * 0.2)
-        x = max(6, min(w - 20, x))
-        lift = peak * max(0.0, 1 - abs(x - cx) / (w * 0.45)) ** 1.3
-        base = foot(int(x)) - lift * r.uniform(0.55, 1.0)
-        spots.append((base, x, r.choice(kinds)))
-    for _ in range(max(2, n // 6)):
-        x = r.uniform(4, w - 24)
-        spots.append((foot(int(x)) + r.randint(2, 6), x, r.choice(kinds)))
+    def lift(x, spread=0.47):
+        base = peak * max(0.0, 1 - abs(x - cx) / (w * spread)) ** 1.3
+        return base * (1 + 0.10 * math.sin(x * 0.21 + ph3))                 # a lumpy, not ruler-smooth, crest
+
+    def top(x):
+        return foot(x) - lift(x)
+
+    # the body: one dark mass, a lit crest along its top, a handful of broad lumps (no speckle)
     for x in range(2, w - 2):
-        lift = peak * max(0.0, 1 - abs(x - cx) / (w * 0.47)) ** 1.3
-        top = int(foot(x) - lift)
-        for y in range(top, foot(x) + 1):
+        t = int(top(x))
+        for y in range(t, foot(x) + 1):
             p.put(x, y, "plastic", 1)
-    for _ in range(int(w * peak / 9)):
-        x = r.randint(4, w - 6)
-        lift = peak * max(0.0, 1 - abs(x - cx) / (w * 0.47)) ** 1.3
-        if lift < 3:
+        if foot(x) - t >= 2:
+            p.put(x, t, "plastic", 2)
+    for _ in range(max(1, w // 40)):
+        lx = r.uniform(w * 0.15, w * 0.85)
+        if lift(lx) < 6:
             continue
-        y = r.randint(int(ground - lift) + 1, ground - 1)
-        mat = r.choice(["steel", "rubber", "plastic", "card"])
-        cw, ch = r.randint(2, 4), r.randint(1, 2)
-        p.rect(x, y, x + cw, y + ch, mat, r.choice([1, 2, 2, 3]))
-    for base, x, k in sorted(spots):
-        draw(p, k, int(x) - 6, int(base), r)
-    for _ in range(2):
-        bx = r.randint(0, w - 14)
-        bag_slot(p, bx, foot(bx) + r.randint(1, 5), r)
-    rr = _rr(Q())
-    nd = 1 if w < 80 else 2 if w < 160 else 3
-    p.post.append(lambda q: pile_derez(q, rr, nd))
-    return p.finish()
+        ly = r.uniform(top(lx) + 3, foot(int(lx)) - 2)
+        rx, ry = r.uniform(4, 7), r.uniform(2, 3)
+        mat = r.choice(["rubber", "plastic"])
+        for yy in range(int(ly - ry), int(ly + ry) + 1):
+            for xx in range(int(lx - rx), int(lx + rx) + 1):
+                if ((xx - lx) / rx) ** 2 + ((yy - ly) / ry) ** 2 <= 1 and p.get(xx, yy) == ("plastic", 1):
+                    lit_px = (xx - lx) / rx + (yy - ly) / ry < -0.9
+                    p.put(xx, yy, mat, 3 if lit_px else 2)
+
+    def sink(pts, X, Y, frac):
+        ys = [y for _x, y in pts]
+        depth = max(2, int((max(ys) - min(ys) + 1) * frac))
+        t0, ph = top(X), r.uniform(0, 6.3)
+        bury(p, pts, lambda xx: Y - depth + 0.7 * (top(xx) - t0) + 1.2 * math.sin(xx * 0.6 + ph), r)
+
+    # deep layer: dim silhouettes of junk the heap already swallowed, so the mass reads as junk (calmly)
+    deep = []
+    for _ in range(max(2, n // 2 + 1)):
+        x = max(8, min(w - 8, r.gauss(cx, w * 0.24)))
+        deep.append((foot(int(x)) - lift(x) * r.uniform(0.3, 0.85), x, r.choice(kinds)))
+    for base, x, kind in sorted(deep):
+        q, contact = posed(kind, r, side=-1 if x < cx else 1, big=r.random() < 0.6, shade=2)
+        X, Y = int(x), int(base) + 1
+        sink(paste_at(p, q, contact, X, Y), X, Y, r.uniform(0.45, 0.8))
+
+    # parts: spots inside the mound, drawn far/high first so nearer junk overlaps
+    spots = []
+    nbig = max(1, n // 3)
+    for i in range(n):
+        x = max(8, min(w - 8, r.gauss(cx, w * 0.21)))
+        k = r.uniform(0.5, 1.0)
+        spots.append((foot(int(x)) - lift(x) * k, x, r.choice(kinds), k, i))
+    nspill = spills if spills is not None else 1 if n < 5 else 2
+    for i in range(nspill):                                                 # slid out in front of the heap
+        x = r.uniform(10, w - 10)
+        spots.append((foot(int(x)) + r.randint(2, 5), x, r.choice(kinds), -1, n + i))
+    for base, x, kind, k, i in sorted(spots):
+        side = -1 if x < cx else 1
+        q, contact = posed(kind, r, side=side, checker_patch=(i == checker_at), big=0 <= i < nbig, shade=1)
+        X, Y = int(x), int(base) + 1
+        pts = paste_at(p, q, contact, X, Y)
+        if k < 0:                                                           # spill: barely sunk into floor junk
+            if r.random() < 0.5:
+                bury(p, pts, lambda xx: Y - 3, r, rim=False)
+            continue
+        if r.random() < 0.8:
+            sink(pts, X, Y, r.uniform(0.25, 0.55))
+    p.outline()
+    if derez:
+        D.BUDGET["derez"] = derez
+        pile_derez(p, _rr(Q()), derez)
+    return p.bbox_crop()
 
 
-def dstack(seed, parts, w=44, h=70):
+def drop(p, q, x, ground, sink=2):
+    """Lower q (left edge at x) onto what is already drawn in p - or the ground row - until it touches;
+    then let it settle `sink` px into the top face it lands on. sink="ground": stand on the floor in front
+    of what is there (leaning against it). Returns the pixels written."""
+    bb = _pix_bbox(q)
+    best, on_ground = None, True
+    if sink == "ground":
+        best, sink = ground - bb[3], 0
+    for u in range(bb[0], bb[2] + 1) if best is None else ():
+        col = [v for v in range(q.h) if q.px[v][u] is not None]
+        if not col:
+            continue
+        b = max(col)
+        X = x + u - bb[0]
+        s = ground + 1
+        if 0 <= X < p.w:
+            for yy in range(p.h):
+                if p.px[yy][X] is not None:
+                    s = min(s, yy)
+                    break
+        cand = s - 1 - b
+        if best is None or cand < best:
+            best, on_ground = cand, s == ground + 1
+    dy = best + (0 if on_ground else sink)
+    wrote = []
+    for v in range(q.h):
+        for u in range(q.w):
+            val = q.px[v][u]
+            if val is not None and 0 <= x + u - bb[0] < p.w and 0 <= v + dy < p.h:
+                p.put(x + u - bb[0], v + dy, *val)
+                wrote.append((x + u - bb[0], v + dy))
+    return wrote
+
+
+def dstack_lean(seed, spec, w=64, h=84, lit_top=False):
+    """Things stacked by somebody once and now leaning: each part (kind, pose, angle, dx, sink) is
+    dropped onto what is below it, so the tower leans and looks like it could topple."""
     r = random.Random(seed)
     D.reseed(seed)
-    _budget(60)
-    D.BUDGET.update(corrupt=0, subst=0)                                     # curated stacks: no substitutions
-    p = DPix(w, h + 12)
-    base, x = h + 12 - 3, 6
-    for k in parts:
-        x0, top_y, x1, _ = draw(p, k, x + r.randint(-2, 2), base, r)[0]
-        base = top_y + 3
-    return p.finish()
+    D.BUDGET.update(subst=0, corrupt=0, wire=0, derez=0, bits=0)
+    p = DPix(w, h)
+    ground = h - 3
+    for i, (kind, pose, angle, dx, sink, *fn) in enumerate(spec):
+        lit = lit_top and i == len(spec) - 1
+        q, _contact = posed(kind, r, pose=pose, angle=angle, lit=lit, fn=fn[0] if fn else None)
+        drop(p, q, 14 + dx, ground, sink)
+    p.outline()
+    return p.bbox_crop()
 
 
 def dsingle(fn, seed, w=56, h=64, budget=True, **kw):
@@ -743,7 +1165,7 @@ def dsingle(fn, seed, w=56, h=64, budget=True, **kw):
 
 # =============================================================== new standalone props
 
-def dialog(p, x, y, r, msg="ERR"):
+def dialog(p, x, y, r, msg="ERR", shards=True, title=True):
     """Broken error dialog standing on the floor: bevelled grey window, title bar with close box,
     error icon, message, OK button. The lower-right corner shattered off."""
     w, h, d = 36, 26, 2
@@ -754,7 +1176,10 @@ def dialog(p, x, y, r, msg="ERR"):
     p.hline(x, x + w - 1, y, "steel", 1); p.vline(x + w - 1, top - d, y, "steel", 1)
     p.rect(x + 2, top + 2, x + w - 3, top + 8, "tarp", 2)                 # title bar
     p.hline(x + 2, x + w - 3, top + 2, "tarp", 3)
-    F.text(p, x + 4, top + 3, "ERROR", "paper", 4)
+    if title:
+        F.text(p, x + 4, top + 3, "ERROR", "paper", 4)
+    else:                                                                  # tilted: tiny text would turn to noise
+        p.hline(x + 4, x + 16, top + 5, "tarp", 3)
     bxx = x + w - 10
     p.rect(bxx, top + 3, bxx + 6, top + 7, "steel", 3)                    # close box
     p.hline(bxx, bxx + 6, top + 3, "steel", 4); p.vline(bxx + 6, top + 3, top + 7, "steel", 1)
@@ -784,7 +1209,7 @@ def dialog(p, x, y, r, msg="ERR"):
     if msg != "404":
         line(p, x + w - 15, y - 4, x + w - 18, y - 8, "steel", 1)
         line(p, x + w - 18, y - 8, x + w - 16, y - 13, "steel", 1)
-    for sx, sy, s in ((x + w - 4, y, 2), (x + w - 8, y, 1), (x + w + 1, y - 1, 1)):   # shards on the floor
+    for sx, sy, s in ((x + w - 4, y, 2), (x + w - 8, y, 1), (x + w + 1, y - 1, 1)) if shards else ():   # shards
         p.rect(sx, sy - s + 1, sx + s - 1, sy, "steel", 3)
     return (x, top - d, x + w + 1, y), w + 2
 
@@ -855,9 +1280,10 @@ def recycle_bin(p, x, y, r):
     p.rect(pc[0] - 5, pc[1] - 4, pc[0] + 5, pc[1] + 4, "steel", 3)
     p.hline(pc[0] - 5, pc[0] + 5, pc[1] - 4, "steel", 4); p.vline(pc[0] + 5, pc[1] - 4, pc[1] + 4, "steel", 2)
     tri = [(0, -3), (-1, -2), (1, -2), (-2, -1), (2, -1), (-3, 1), (3, 1), (-3, 2), (-2, 2), (2, 2), (3, 2), (0, 2)]
+    tm, ts = ("glow", 1) if CALM["lit"] else ("steel", 1)                  # calm: an embossed, unlit symbol
     for dx, dy in tri:
-        p.put(pc[0] + dx, pc[1] + dy, "glow", 1)
-    p.put(pc[0] + 1, pc[1] - 3, "glow", 1); p.put(pc[0] - 4, pc[1] + 1, "glow", 1); p.put(pc[0] + 1, pc[1] + 3, "glow", 1)
+        p.put(pc[0] + dx, pc[1] + dy, tm, ts)
+    p.put(pc[0] + 1, pc[1] - 3, tm, ts); p.put(pc[0] - 4, pc[1] + 1, tm, ts); p.put(pc[0] + 1, pc[1] + 3, tm, ts)
     return (x, top - 8, x + wt - 1, y), wt
 
 
@@ -1335,47 +1761,10 @@ def dg_spark(seed):
                 dx, dy = r.randint(-5, 6), r.randint(-9, 1)
                 bits.append((23 + dx, 18 + dy, "spark", r.choice([2, 3, 4])))
             bits.append((24, 17, "spark", 4))
-            bits.append((24 + r.randint(-3, 4), 8 + r.randint(0, 3), "glow", 3))   # a data bit flung up
         p.finish(crop=False)
         for x, y, m, s in bits:
             p.put(x, y, m, s)
         frames.append(p)
-    return anim_strip(frames)
-
-
-def dg_tv(seed):
-    """Error-dialog CRT whose screen flickers (6 frames, same brightness pattern as a_tv)."""
-    levels = [1, 2, 1, 3, 1, 0]
-    frames = []
-    for lv in levels:
-        p = DPix(20, 20)
-        box(p, 2, 18, 15, 6, 11, "plastic", front=2, top=3)
-        screen(p, 4, 10, 13, 16, "err")
-        dim_screen(p, 4, 10, 13, 16, {0: 0, 1: 2, 2: 3, 3: 4}[lv])
-        frames.append(p.finish(crop=False))
-    return anim_strip(frames)
-
-
-def dg_rack(seed):
-    """Legacy server with blinking status lights, a pulled caddy and a dangling cable (6 frames)."""
-    r0 = random.Random(seed)
-    leds = [(r0.randint(0, 6), r0.random() < 0.3) for _ in range(9)]
-    frames = []
-    for i in range(6):
-        p = DPix(18, 36)
-        box(p, 2, 34, 12, 4, 27, "steel", front=1, top=3)
-        for k, (ph, red) in enumerate(leds):
-            yy = 11 + k * 3
-            if k == 4:                                                       # half-pulled drive caddy
-                p.hline(3, 12, yy - 1, "steel", 4); p.hline(3, 12, yy, "plastic", 2)
-                continue
-            p.hline(4, 11, yy, "plastic", 1)
-            on = (i + ph) % 3 != 0
-            p.put(11, yy, "redp" if red else "glow", 4 if on else 1)
-        p.put(5, 17, "shell", 3)
-        for kk, yy in enumerate(range(18, 34)):
-            p.put(5 - (1 if (kk // 3) % 2 else 0), yy, "rubber", 1)
-        frames.append(p.finish(crop=False))
     return anim_strip(frames)
 
 
@@ -1598,7 +1987,7 @@ def dg_meme_fine(seed, n=4):
     """Homage: the 'this is fine' dog in a bowler hat, sitting at a table with a mug while the
     junk around it burns (4 frames: flames lick, the dog stays calm)."""
     frames = []
-    flames = [(2, 9), (6, 7), (31, 10), (35, 8), (25, 5)]                  # (x, base height)
+    flames = [(3, 9), (7, 6), (32, 10), (36, 7)]                          # (x, base height): the room around him burns
     for i in range(n):
         r = random.Random(seed * 10 + i)
         p = DPix(40, 32)
@@ -1665,6 +2054,141 @@ def dg_meme_rick(seed, n=4):
     return anim_strip(frames, crop=True)
 
 
+# =============================================================== dumped story singles and calm animations
+# Nothing in the recycle bin stands tidy: every single is turned onto the corner it rests on (rot.py),
+# propped on or sunk into a low bank of scrap. Story labels (404, EOL, GC) stay readable: small angles.
+
+def _settle(fn, seed, angle, lit=False, labels=True, canvas=160, **kw):
+    """Draw a single alone (calm switches applied) and turn it onto its contact corner.
+    Returns (Pix, contact point, rng)."""
+    r = random.Random(seed)
+    D.reseed(seed)
+    D.BUDGET.update(subst=0, corrupt=0, wire=0, derez=0, bits=0)
+    c = DPix(canvas, canvas)
+    c.new_tag("single")
+    with calm(lit=lit, labels=labels):
+        fn(c, canvas // 3, canvas * 2 // 3, r, **kw)
+    c.tag, c.post = None, []
+    x0, _y0, x1, y1 = _pix_bbox(c)
+    pivot = (x1 + 1, y1 + 1) if angle > 0 else (x0, y1 + 1)
+    if not angle:
+        return c, pivot, r
+    q, (ox, oy) = rot.rotate(c, angle, pivot)
+    return q, (pivot[0] - ox, pivot[1] - oy), r
+
+
+def _span(q, ct, X):
+    x0, _y0, x1, _y1 = _pix_bbox(q)
+    return X - ct[0] + x0, X - ct[0] + x1
+
+
+def dumped_dialog(seed=2, angle=-9):
+    """The 404 dialog that came down the chute with her: tipped back onto a bank of scrap, its shattered
+    corner sunk in it. Scale-2 glyphs, so the 404 survives the small turn."""
+    q, ct, r = _settle(lambda p, x, y, r: dialog(p, x, y, r, msg="404", shards=False, title=False), seed, angle)
+    p = DPix(110, 80)
+    X, Y = 24, 72
+    L, R = _span(q, ct, X)
+    mid = L + (R - L) * 0.45
+    debris_skirt(p, int(mid), R + 7, Y, 8, r)                         # what it fell onto
+    pts = paste_at(p, q, ct, X, Y)
+    t = math.tan(math.radians(-angle))
+    bury(p, pts, lambda x: Y - (x - L) * t - 3 if x > mid + 3 else Y + 1, r)
+    p.outline()
+    return p.bbox_crop()
+
+
+def dumped_softbox(seed=9, angle=-5):
+    """Her discontinued software box, dropped on its back beside the rug, a little askew."""
+    q, ct, r = _settle(lie_softbox, seed, angle)
+    p = DPix(60, 50)
+    X, Y = 10, 44
+    L, R = _span(q, ct, X)
+    debris_skirt(p, R - 7, R + 2, Y, 2, r)                            # a scrap under the lifted end
+    paste_at(p, q, ct, X, Y)
+    p.outline()
+    return p.bbox_crop()
+
+
+def dumped_recycle(seed=5, angle=21):
+    """The recycle bin's intake can, shoved over by the heap: leaning hard on its bottom corner, propped
+    on scrap, crumpled files spilled out in front of it."""
+    q, ct, r = _settle(recycle_bin, seed, angle, labels=False)
+    p = DPix(100, 80)
+    X, Y = 66, 70
+    L, R = _span(q, ct, X)
+    debris_skirt(p, L - 2, L + 12, Y, 9, r)                           # scrap under the lifted side
+    paste_at(p, q, ct, X, Y)
+    for dx, dy in ((-11, 2), (-3, 3)):                                # spilled crumpled files
+        paper_wad(p, L + dx, Y + dy, r)
+    p.outline()
+    return p.bbox_crop()
+
+
+def dumped_gcbot(seed=11, angle=5):
+    """The garbage collector parked between cycles, one track up on a scrap bank (so it sits tilted)."""
+    q, ct, r = _settle(gc_robot, seed, angle, labels=True)
+    p = DPix(80, 60)
+    X, Y = 64, 54
+    L, _R = _span(q, ct, X)
+    debris_skirt(p, L - 4, L + 11, Y, 4, r)
+    paste_at(p, q, ct, X, Y)
+    p.outline()
+    return p.bbox_crop()
+
+
+def dg_tv(seed, angle=13):
+    """Error-dialog CRT knocked onto a lump of scrap, its screen still flickering (6 frames, same
+    brightness pattern as a_tv). The only screen in the room besides the one on the bit bucket."""
+    levels = [1, 2, 1, 3, 1, 0]
+    r = random.Random(seed)
+    frames = []
+    for lv in levels:
+        c = DPix(30, 30)
+        box(c, 4, 26, 15, 6, 11, "plastic", front=2, top=3)
+        screen(c, 6, 18, 15, 24, "err")
+        dim_screen(c, 6, 18, 15, 24, {0: 0, 1: 2, 2: 3, 3: 4}[lv])
+        q, (ox, oy) = rot.rotate(c, angle, (19, 27))
+        p = DPix(40, 34)
+        rr = random.Random(seed)
+        debris_skirt(p, 3, 14, 31, 4, rr)
+        paste_at(p, q, (19 - ox, 27 - oy), 30, 32)
+        frames.append(p.finish(crop=False))
+    del r
+    return anim_strip(frames, crop=True)
+
+
+def dg_rack(seed, angle=-9):
+    """Legacy server leaning back against the heap (on its bottom-left corner, the other propped on
+    scrap); a few status lights still blink - dim, the only LEDs left on in the room (6 frames)."""
+    r0 = random.Random(seed)
+    leds = {1: (0, False), 3: (2, False), 6: (1, True), 8: (4, False)}   # slot: (phase, red)
+    frames = []
+    for i in range(6):
+        c = DPix(24, 40)
+        box(c, 4, 36, 12, 4, 27, "steel", front=1, top=3)
+        for k in range(9):
+            yy = 13 + k * 3
+            if k == 4:                                                       # half-pulled drive caddy
+                c.hline(5, 14, yy - 1, "steel", 4); c.hline(5, 14, yy, "plastic", 2)
+                continue
+            c.hline(6, 13, yy, "plastic", 1)
+            if k in leds:
+                ph, red = leds[k]
+                on = (i + ph) % 3 != 0
+                c.put(13, yy, "redp" if red else "glow", (4 if red else 3) if on else 1)
+        c.put(7, 19, "shell", 3)
+        for kk, yy in enumerate(range(20, 36)):
+            c.put(7 - (1 if (kk // 3) % 2 else 0), yy, "rubber", 1)
+        q, (ox, oy) = rot.rotate(c, angle, (4, 37))
+        p = DPix(36, 44)
+        debris_skirt(p, 14, 24, 40, 3, random.Random(seed))
+        paste_at(p, q, (4 - ox, 37 - oy), 8, 41)
+        frames.append(p.finish(crop=False))
+    del r0
+    return anim_strip(frames, crop=True)
+
+
 # =============================================================== targets
 
 ANIM_INFO = {  # name: (frames, fps, meaning) - used by the integration step and the catalog
@@ -1677,15 +2201,34 @@ ANIM_INFO = {  # name: (frames, fps, meaning) - used by the integration step and
     "dg_a_meme_fine.png": (4, 8, "'this is fine' homage"), "dg_a_meme_rick.png": (4, 6, "rickroll homage"),
 }
 
-MIRROR = {}  # dg_<gen_junk name>: builder (1:1 swap for the room)
-MIRROR.update({f"dg_{n}": (lambda t=t, s=s, k=k, w=w, pk=pk: dmound(s, DTHEMES[t], n=k, w=w, peak=pk))
+# Calm heaps (dheap): the gen_junk names and seeds, about a third of the parts (bigger, fewer, all
+# tumbled and half buried). Room-wide accent budget: 3 quiet de-rez spots and 1 missing-texture patch.
+HEAP_ACCENTS = {"dg_c_main.png": dict(derez=1, checker_at=12), "dg_c_ridge.png": dict(derez=1),
+                "dg_e_5.png": dict(derez=1)}
+
+
+def _calm_n(n):
+    return max(2, round(n / 4))
+
+
+MIRROR = {}  # dg_<gen_junk name>: builder (same file names, so the room layout swaps them 1:1)
+MIRROR.update({f"dg_{n}": (lambda t=t, s=s, k=k, w=w, pk=pk, a=HEAP_ACCENTS.get(f"dg_{n}", {}):
+                           dheap(s, DTHEMES[t], n=_calm_n(k), w=w, peak=pk, **a))
                for n, (t, s, k, w, pk) in J.ROOM_PILES.items()})
-MIRROR.update({f"dg_{n}": (lambda kinds=kinds, s=s, k=k, w=w, pk=pk: dmound(s, kinds, n=k, w=w,
-                                                                           h=pk + 44, peak=pk))
+MIRROR.update({f"dg_{n}": (lambda kinds=kinds, s=s, k=k, w=w, pk=pk, a=HEAP_ACCENTS.get(f"dg_{n}", {}):
+                           dheap(s, kinds, n=_calm_n(k), w=w, peak=pk, **a))
                for n, (kinds, s, k, w, pk) in J.MIX.items()})
-MIRROR.update({f"dg_{n}": (lambda s=s, w=w, pk=pk, k=k: dmound(s, ALL_KINDS, n=k, w=w, h=pk + 44, peak=pk))
+MIRROR.update({f"dg_{n}": (lambda s=s, w=w, pk=pk, k=k, a=HEAP_ACCENTS.get(f"dg_{n}", {}):
+                           dheap(s, ALL_KINDS, n=_calm_n(k), w=w, peak=pk, **a))
                for n, (s, w, pk, k) in J.EDGES.items()})
-MIRROR.update({f"dg_{n}": (lambda s=s, ps=ps: dstack(s, ps)) for n, (s, ps) in J.STACKS.items()})
+LEAN_STACKS = {  # name: (seed, [(kind, pose, angle, dx, sink)], lit top) - towers that lean and could topple
+    "dg_t_amp_tower.png": (24, [("amp", "tilt", 6, 0, 0), ("amp", "tilt", 15, 3, 2), ("monitor", "tilt", 30, 9, 2)], False),
+    "dg_t_crates.png": (22, [("crate", "lie", -3, 0, 0), ("crate", "tilt", -17, -1, 2), ("speaker", "tilt", -24, 13, "ground")], False),
+    "dg_t_rack_monitor.png": (23, [("pallet", "tilt", 3, 0, 0), ("rack", "lie", -8, 1, 2)], False),
+    "dg_t_barrel_tv.png": (21, [("barrel", "tilt", -5, 0, 0),
+                                ("tv", "tilt", 12, 1, 2, lambda p, x, y, r: err_tv(p, x, y, r, kind="err"))], True),
+}
+MIRROR.update({n: (lambda s=s, sp=sp, lt=lt: dstack_lean(s, sp, lit_top=lt)) for n, (s, sp, lt) in LEAN_STACKS.items()})
 _SINGLE_FN = {"s_worklamp.png": None, "s_mic.png": "mic", "s_rhead.png": "rhead", "s_barrel.png": "barrel",
               "s_tv.png": "tv", "s_spot.png": "spot", "s_speaker.png": "speaker"}
 
@@ -1705,25 +2248,25 @@ MIRROR.update({
     "dg_f_plate1.png": lambda: floor_pane(3), "dg_f_coil1.png": lambda: lan_coil_frame(None),
     "dg_a_spark.png": lambda: dg_spark(1), "dg_a_tv.png": lambda: dg_tv(2), "dg_a_rack.png": lambda: dg_rack(3),
     "dg_a_fan.png": lambda: dg_fan(4),
-    "dg_pile_a.png": lambda: dmound(11, ["crate", "crate", "tv", "amp", "bag"]),
-    "dg_pile_b.png": lambda: dmound(23, ["amp", "rack", "amp", "crate", "bag"]),
-    "dg_pile_c.png": lambda: dmound(37, ["rack", "tv", "crate", "crate", "bag"], n=20, w=140, peak=38),
+    "dg_pile_a.png": lambda: dheap(11, ["crate", "crate", "tv", "amp"], n=5),
+    "dg_pile_b.png": lambda: dheap(23, ["amp", "rack", "amp", "crate"], n=5),
+    "dg_pile_c.png": lambda: dheap(37, ["rack", "tv", "crate", "crate"], n=7, w=140, peak=38),
     "dg_crate.png": lambda: dsingle(archive, 3), "dg_amp.png": lambda: dsingle(driver_amp, 3),
     "dg_rack.png": lambda: dsingle(legacy_rack, 3), "dg_tv.png": lambda: dsingle(err_tv, 3),
 })
 
 NEW = {  # new digital-native props
     "dg_s_dialog_err.png": lambda: dsingle(dialog, 1, w=60, h=40),
-    "dg_s_dialog_404.png": lambda: dsingle(dialog, 2, w=60, h=40, msg="404"),
+    "dg_s_dialog_404.png": lambda: dumped_dialog(2),
     "dg_s_folder.png": lambda: dsingle(big_folder, 3, w=64, h=40),
     "dg_s_files.png": lambda: dsingle(_files, 4, w=64, h=30),
-    "dg_s_recycle.png": lambda: dsingle(recycle_bin, 5, w=48, h=50),
+    "dg_s_recycle.png": lambda: dumped_recycle(5),
     "dg_s_spam.png": lambda: dsingle(spam_pyramid, 6, w=50, h=34),
     "dg_s_cookiejar.png": lambda: dsingle(cookie_jar, 7, w=40, h=32),
     "dg_s_missing.png": lambda: dsingle(lambda p, x, y, r: missing_cube(p, x, y, r, s=13), 8, w=30, h=30),
-    "dg_s_softbox.png": lambda: dsingle(software_box, 9, w=30, h=36),
+    "dg_s_softbox.png": lambda: dumped_softbox(9),
     "dg_s_captcha.png": lambda: dsingle(captcha_panel, 10, w=36, h=44),
-    "dg_s_gcbot.png": lambda: dsingle(gc_robot, 11, w=44, h=36),
+    "dg_s_gcbot.png": lambda: dumped_gcbot(11),
     "dg_s_parcels.png": lambda: dsingle(parcels, 12, w=60, h=34),
     "dg_s_cache.png": lambda: dsingle(cache_box, 13, w=32, h=30),
     "dg_s_keys_undo.png": lambda: dsingle(keys_undo, 14, w=40, h=24),
@@ -1851,8 +2394,40 @@ def scale_sheet(imgs, path):
     print("preview", path, big.size)
 
 
+def calm_items():
+    """Lying drawings, posed (tilted / lying / fallen / flipped) parts, a buried heap, leaning stacks and
+    the dumped story singles - the calm-room vocabulary at a glance."""
+    items = []
+    for k, fn in LIE.items():
+        c = DPix(70, 60)
+        D.reseed(1)
+        fn(c, 10, 50, random.Random(3))
+        c.outline()
+        items.append((f"lie {k}", c.bbox_crop().image()))
+    for kind, pose, ang in (("crate", "tilt", 18), ("crate", "tilt", -34), ("amp", "lie", 9), ("rack", "tilt", -24),
+                            ("tv", "lie", -7), ("chair", "flip", 190), ("ladder", "fall", 88), ("rtorso", "lie", 6),
+                            ("pipes", "slump", 9), ("monitor", "tilt", 30), ("barrel", "lie", -5), ("spot", "flip", 172)):
+        D.reseed(2)
+        q, _ct = posed(kind, random.Random(5), pose=pose, angle=ang)
+        q.outline()
+        items.append((f"{kind} {pose} {ang}", q.bbox_crop().image()))
+    for n in ("dg_e_5.png", "dg_c_small1.png", "dg_c_small2.png"):
+        items.append((n[3:-4] + " heap", MIRROR[n]().image()))
+    for n in LEAN_STACKS:
+        items.append((n[3:-4], MIRROR[n]().image()))
+    for n in ("dg_s_dialog_404.png", "dg_s_softbox.png", "dg_s_recycle.png", "dg_s_gcbot.png"):
+        items.append((n[3:-4], NEW[n]().image()))
+    for n, mk in (("dg_a_tv.png", MIRROR["dg_a_tv.png"]), ("dg_a_rack.png", MIRROR["dg_a_rack.png"]),
+                  ("dg_a_meme_fine.png", NEW["dg_a_meme_fine.png"])):
+        im = mk().image()
+        fr = ANIM_INFO[n][0]
+        items.append((n[3:-4] + " f0", im.crop((0, 0, im.width // fr, im.height))))
+    return items
+
+
 def previews(d):
     os.makedirs(d, exist_ok=True)
+    sheet(calm_items(), os.path.join(d, "e_calm_parts.png"), max_w=600, title="CALM: LYING / TILTED / BURIED / LEANING")
     sheet(before_after(), os.path.join(d, "a_before_after.png"), max_w=560, title="GEN-JUNK PART -> DIGITAL")
     new_items = []
     for n, mk in NEW.items():

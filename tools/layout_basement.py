@@ -11,12 +11,15 @@ Room story (screen px, environment drawn at 1/3 and shown at 3x):
   * Wall piles are sorted by kind (it is a scrapyard): storage left, audio back-left,
     servers back-right, stage leftovers and overflow along the front.
   * The exit on the right leads to the elevator hall (ExitZone -> elevator_hall.tscn).
-  * A severed power line from the server racks sparks; the TVs it still feeds flicker;
-    a ventilation fan turns in the exit corridor. Work lamps on tripods follow the walkway.
+  * A severed power line from the server racks sparks; the one TV it still feeds flickers.
+    Work lamps on tripods follow the walkway. Only story props stand alone (CLAUDE.md rule 6);
+    everything dumped tilts, lies or sinks into the junk, and open floor is left between the piles.
 
 Lighting (scripts/world/pixel_lighting.gd, one PixelLight per visible source, LIGHTS below):
   the chute beam lands on the rug (start), warm work lamps light the walkway, the elevator hall's
-  light spills in through the exit (the goal), cyan screens/LEDs and the sparks are small accents.
+  light spills in through the exit (the goal). Small accents only where the story needs them: the sparks,
+  the flickering TV, the display on the bit bucket, a few dim server LEDs, the burning-room flames
+  (calm-glow rule: tools/art/gen_emission.py STORY_EMITTERS; all other screens in the piles are dead).
 """
 import ast
 import math
@@ -51,60 +54,46 @@ ROOM = (42, 192, 918, 720)
 C, O, D = "code", "organic", "digital"
 # (folder, file, x, y, reason, extra)  - x, y = base line centre
 PLAN = [
-    # 0. the recycle bin itself: deleted data falls through the chute and piles up here (docs/WORLD.md)
+    # 0. the recycle bin itself: deleted data falls through the chute and piles up here (docs/WORLD.md).
+    #    Nothing here stands tidy: it fell, so it lies, tilts and sinks (tools/art/rot.py, CLAUDE.md rule 6).
     (D, "dg_c_main", 480, 350, "deletion chute drop: the biggest heap of deleted data right under the chute", {}),
-    (D, "dg_s_recycle", 300, 332, "the recycle bin's own intake can, overflowing next to the heap", {}),
-    (D, "dg_a_cursor", 556, 300, "a mouse cursor stuck on the heap's slope, still hovering over something nobody clicked",
-     {"frames": 4, "fps": 4, "solid": False}),
+    (D, "dg_s_recycle", 262, 372, "the recycle bin's own intake can at the heap's foot, shoved over by it, crumpled files spilling out", {}),
     (O, "org_android_sit", 352, 400, "a deprecated avatar that slid down the heap, slumped at its foot", {}),
-    (O, "org_head", 590, 398, "an avatar head rolled off the heap", {}),
-    (O, "org_arm", 360, 486, "an avatar arm rolled off the heap, came to rest by the rug", {}),
     (O, "org_cables", 610, 368, "cables spilling from the heap", {}),
-    (D, "dg_s_dialog_404", 430, 380, "a 404 dialog that came down the chute with her - her voice is the missing page", {}),
-    (D, "dg_s_softbox", 628, 420, "her own discontinued software box (EOL), dumped beside the rug she wakes on", {}),
+    (D, "dg_s_dialog_404", 430, 380, "a 404 dialog that came down the chute with her, tipped onto the heap's foot - her voice is the missing page", {}),
+    (D, "dg_s_softbox", 628, 420, "her own discontinued software box (EOL), dropped on its back beside the rug she wakes on", {}),
     (D, "dg_f_home", 500, 505, "127.0.0.1 doormat at the rug's edge: there's no place like home", {"solid": False}),
-    # 1. sorted wall piles (the garbage collector pushed deleted data aside by type)
+    # 1. sorted wall piles (the garbage collector pushed deleted data aside by type); open floor left between them
     (D, "dg_e_11", 322, 258, "back wall: overflow of the deletion heap", {}),
     (D, "dg_e_5", 708, 272, "back wall: overflow of the deletion heap", {}),
     (D, "dg_c_small2", 118, 336, "back-left: deprecated audio drivers sorting corner", {}),
-    (D, "dg_t_amp_tower", 236, 396, "back-left: unsupported .wav drivers stacked by type", {}),
-    (D, "dg_s_speaker", 172, 376, "back-left: speaker driver leaning on the audio corner", {}),
-    (D, "dg_s_meme_doge", 214, 456, "a retired meme mascot sitting with the old audio gear - much deleted, very wow", {}),
+    (D, "dg_t_amp_tower", 178, 412, "back-left: .wav drivers somebody stacked by type, now leaning, about to topple", {}),
     (D, "dg_e_0", 95, 300, "back-left corner fill", {}),
     (D, "dg_e_1", 52, 438, "left wall: compressed archives (.zip) of deleted storage", {}),
-    (D, "dg_s_meme_troll", 128, 522, "a .bak of an old reaction face nobody uses any more", {}),
     (D, "dg_e_3", 70, 566, "left wall: compressed archives (.zip) of deleted storage", {}),
     (D, "dg_a_meme_fine", 158, 640, "a corner where a tiny burning room keeps saying everything is fine (an unhandled error)",
      {"frames": 4, "fps": 8}),
     (D, "dg_e_7", 58, 692, "left wall: storage junk", {}),
-    (D, "dg_s_spam", 236, 610, "spam tins swept off the walkway with the rest of the junk mail", {}),
     (D, "dg_c_ridge", 250, 745, "pushed aside when the walkway was cleared (south side)", {}),
-    (D, "dg_t_crates", 470, 690, "archives shoved off the walkway", {}),
+    (D, "dg_t_crates", 470, 690, "archives shoved off the walkway, slumped against each other", {}),
     (D, "dg_c_small1", 790, 380, "back-right: legacy servers and dead displays", {}),
     (D, "dg_e_9", 902, 322, "back-right corner fill", {}),
     (D, "dg_t_barrel_tv", 700, 420, "a display left on a bit bucket, still powered", {}),
     (D, "dg_c_mid", 800, 752, "front-right: leftovers of a virtual stage", {}),
-    (D, "dg_t_rack_monitor", 615, 708, "a legacy server on a pallet waiting for the next collection", {}),
+    (D, "dg_t_rack_monitor", 615, 708, "a legacy server fallen onto a pallet waiting for the next collection", {}),
     (D, "dg_e_8", 545, 750, "front wall: overflow", {}),
     (D, "dg_e_10", 918, 735, "right wall below the exit", {}),
-    (D, "dg_s_mic", 548, 700, "mic stand dropped beside the walkway", {}),
-    (O, "org_legs", 690, 690, "avatar legs shoved off the walkway", {}),
     (O, "org_android_lying", 360, 560, "a deprecated avatar pushed off the walkway, lying on its back", {}),
     (D, "dg_s_gcbot", 868, 392, "the garbage collector, parked by the exit between collection cycles - the room's threat", {}),
-    # 2. power, data and air (animated)
-    (D, "dg_a_rack", 652, 356, "a legacy server whose status lights still blink", {"frames": 6, "fps": 5}),
+    # 2. the one live power line (animated): the only screens / LEDs / sparks still on in the room
+    (D, "dg_a_rack", 652, 356, "a legacy server leaning on the heap; a few status lights still blink", {"frames": 6, "fps": 5}),
     (D, "dg_a_spark", 612, 456, "severed power line from the servers, sparking at the walkway edge", {"frames": 8, "fps": 10}),
-    (D, "dg_a_tv", 268, 470, "a display on the same line, flickering an error", {"frames": 6, "fps": 6}),
-    (D, "dg_a_fan", 888, 625, "cooling fan by the exit corridor", {"frames": 4, "fps": 12}),
-    (D, "dg_a_bugs", 222, 548, "bugs crawling around the oil leak - every dump has them", {"frames": 12, "fps": 8, "solid": False}),
+    (D, "dg_a_tv", 268, 470, "a display on the same line, knocked onto scrap, still flickering an error", {"frames": 6, "fps": 6}),
     # 3. work lamps: whoever cleared the walkway set up caged bulbs on tripods along its north edge
+    #    (the crew's tools, set up on purpose - the only things standing upright)
     (D, "dg_s_worklamp", 669, 459, "work lamp at the walkway's first stretch, next to the sparking line it was plugged into",
      {"id": "lamp_a"}),
     (D, "dg_s_worklamp", 792, 408, "work lamp on the last stretch before the exit, in front of the server corner", {"id": "lamp_b"}),
-    # 4. walkable floor details
-    (D, "dg_f_puddle1", 200, 520, "oil leaking from the archives by the left wall", {"solid": False}),
-    (D, "dg_f_plate1", 300, 520, "a broken UI window pane kicked off the walkway", {"solid": False}),
-    (D, "dg_f_hello", 300, 448, "a HELLO WORLD printout - the first thing every program says, dropped by the avatar", {"solid": False}),
 ]
 AMBIENT = (0.35, 0.37, 0.46)                             # dim cool base light; the floor never goes black
 WARM, CYAN = (1.0, 0.80, 0.52), (0.40, 0.92, 0.95)
@@ -127,14 +116,16 @@ LIGHTS = [
     dict(name="ExitSpill", type="spot", src="room:exit", at=(313, 148), height=14, color=(1.0, 0.86, 0.66),
          energy=1.4, radius=70, dir=(-1, 0, -0.35), angle=160,
          why="the elevator hall's entry lamp spilling in through the exit opening: the way out glows warm"),
-    dict(name="RackLEDs", type="point", src="dg_a_rack", at=(220, 120), height=16, color=CYAN, energy=0.9, radius=30, halo=0.2, halo_r=3,
-         why="status LEDs of the server rack, still blinking"),
+    dict(name="RackLEDs", type="point", src="dg_a_rack", at=(218.5, 120), height=17.5, color=CYAN, energy=0.6, radius=24,
+         halo=0.15, halo_r=3,
+         why="the few status LEDs of the leaning server, still blinking (dim)"),
     dict(name="TVFlicker", type="spot", src="dg_a_tv", color=CYAN, energy=1.8, radius=46, dir=(0, 1, -0.25), angle=150,
          halo=0.3, halo_r=4, flicker=[0.35, 0.7, 0.35, 1.0, 0.35, 0.0],
          why="the flickering TV fed by the severed line: its screen throws cyan onto the floor in front of it"),
     dict(name="BarrelTV", type="spot", src="dg_t_barrel_tv", color=CYAN, energy=1.0, radius=34, dir=(0, 1, -0.3),
          angle=150, halo=0.2, halo_r=3, why="the TV left on a drum in the server corner, still powered"),
-    dict(name="MemeFire", type="point", src="dg_a_meme_fine", color=(1.0, 0.62, 0.30), energy=1.4, radius=40,
+    dict(name="MemeFire", type="point", src="dg_a_meme_fine", at=(67.5, 214), height=8.5, color=(1.0, 0.62, 0.30),
+         energy=1.4, radius=40,
          halo=0.35, halo_r=4, flicker=[1.0, 0.8, 1.0, 0.7],
          why="the little burning room in the corner: its flames light the junk around it (everything is fine)"),
     dict(name="Sparks", type="point", src="dg_a_spark", color=(1.0, 0.88, 0.45), energy=2.6, radius=48, halo=0.6,

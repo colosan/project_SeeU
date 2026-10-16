@@ -12,8 +12,12 @@ colours, so (material, step) is recoverable per pixel. Rules:
   * generic: glow steps >= 2 (screens, LEDs, the call button, robot eyes) and every spark step.
   * per file (FILES): lit bulbs (shell/warn on the bulb only), red rack LEDs, and files where
     nothing glows even though they use glow colours (a printed notice is not a screen).
+  * calm glow (STORY_EMITTERS): in a folder listed there ONLY the listed files may glow - the story's
+    light sources (docs/ART_PIPELINE.md 8). Everything else in that folder is dark even if its art still
+    has glow colours; adding a file to the list (with its reason) is how a new light source is allowed.
 Source art is never touched; masks are derived files and are rewritten when they change.
-Files without a single emissive pixel get no mask (the lighting treats a missing mask as "nothing glows").
+Files without a single emissive pixel get no mask (the lighting treats a missing mask as "nothing glows");
+if such a file still has an old mask, the mask is overwritten with an all-dark one (we never delete files).
 """
 import os
 import sys
@@ -45,7 +49,18 @@ FILES = {
     "basement/code/s_worklamp.png": {"add": BULB},                          # caged work bulb on its stand
     "basement/digital/dg_s_worklamp.png": {"add": BULB},                    # same lamp in the virtual-world set
     "basement/digital/dg_a_rack.png": {"add": {("redp", 4): 1.0}},          # legacy server: red LEDs when on
-    "basement/digital/dg_a_meme_fine.png": {"add": {("warn", 3): 0.8, ("warn", 4): 1.0}},  # the burning-room flames
+}
+
+# Calm-glow rule: folder -> {file: why it may glow}. Only story sources glow; dumped junk is dead.
+STORY_EMITTERS = {
+    "basement/digital": {
+        "dg_s_worklamp.png": "the GC crew's caged work bulbs light the walkway (LIGHTS WorkLampA/B)",
+        "dg_a_spark.png": "the severed line sparking at the walkway edge",
+        "dg_a_tv.png": "the one TV still fed by that line, flickering an error",
+        "dg_t_barrel_tv.png": "the display left on the bit bucket, still powered",
+        "dg_a_rack.png": "a legacy server whose few status LEDs still blink (dim)",
+        "dg_a_meme_fine.png": "the little burning room: only the flame tips (spark ramp) glow",
+    },
 }
 
 
@@ -60,8 +75,16 @@ def colour_table():
     return table
 
 
+def allowed(rel):
+    """False when rel is in a calm-glow folder but not on its story list."""
+    folder, name = os.path.dirname(rel), os.path.basename(rel)
+    return folder not in STORY_EMITTERS or name in STORY_EMITTERS[folder]
+
+
 def mask_for(rel, im, table):
     rule = FILES.get(rel, {})
+    if not allowed(rel):
+        return Image.new("L", im.size, 0), 0
     generic = GENERIC if rule.get("generic", True) else {}
     extra = rule.get("add", {})
     region = rule.get("region")
@@ -99,6 +122,10 @@ def main(argv):
     for rel in FILES:
         if not os.path.exists(os.path.join(ROOT, rel)):
             print(f"warning: FILES rule for missing {rel}")
+    for folder, names in STORY_EMITTERS.items():
+        for n in names:
+            if not os.path.exists(os.path.join(ROOT, folder, n)):
+                print(f"warning: STORY_EMITTERS lists missing {folder}/{n}")
     written = same = 0
     for path in sources():
         rel = os.path.relpath(path, ROOT).replace(os.sep, "/")
@@ -106,8 +133,15 @@ def main(argv):
         mask, hits = mask_for(rel, im, table)
         dst = path[:-4] + ".emit.png"
         if hits == 0:                                  # nothing glows: no mask (the lighting treats a missing mask as dark)
-            if os.path.exists(dst):
-                print(f"warning: {dst} is stale (no emissive pixels any more) - delete it")
+            if os.path.exists(dst):                    # ...but an old mask would still light it: make it all dark
+                old = Image.open(dst).convert("L")
+                if old.size == mask.size and not old.getbbox():
+                    same += 1
+                    continue
+                print(f"{'would darken' if check else 'darkened'} {dst} (nothing glows here any more)")
+                if not check:
+                    mask.save(dst)
+                written += 1
             continue
         if os.path.exists(dst):
             old = Image.open(dst).convert("L")
