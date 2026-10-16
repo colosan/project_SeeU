@@ -1,7 +1,7 @@
 # project_SeeU — 작업 안내 (새 세션은 이 파일부터)
 
 시유(SeeU)를 비롯한 보컬로이드들이 나오는 **비영리 무료 팬게임**. Godot 4 + GDScript, 탑다운 쯔꾸르풍.
-자세한 내용: [docs/DESIGN.md](docs/DESIGN.md)(세계관·결정 사항), [docs/ART_PIPELINE.md](docs/ART_PIPELINE.md)(그림 만드는 법),
+자세한 내용: [docs/WORLD.md](docs/WORLD.md)(세계관 설정서 — 인터넷 속 가상 세계, 맵 컨셉의 기준), [docs/DESIGN.md](docs/DESIGN.md)(결정 사항), [docs/ART_PIPELINE.md](docs/ART_PIPELINE.md)(그림 만드는 법),
 [docs/WORKFLOW.md](docs/WORKFLOW.md)(실행·검증·커밋), [docs/ASSETS.md](docs/ASSETS.md)(에셋 출처 기록).
 
 ## 사용자와 일하는 방식

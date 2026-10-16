@@ -22,6 +22,7 @@
 ## 문서
 
 - [CLAUDE.md](CLAUDE.md): 작업 규칙 요약 (AI 작업 세션이 가장 먼저 읽는 파일)
+- [docs/WORLD.md](docs/WORLD.md): 세계관 설정서
 - [docs/DESIGN.md](docs/DESIGN.md): 세계관, 화면 구성, 결정 사항
 - [docs/ART_PIPELINE.md](docs/ART_PIPELINE.md): 배경·소품 그리는 법 (코드 그리기, PixelLab 가져오기, 배치 규칙)
 - [docs/WORKFLOW.md](docs/WORKFLOW.md): 실행, 검증, 커밋 방법과 현재 진행 상황
