@@ -91,9 +91,9 @@ WARM, CYAN = (1.0, 0.84, 0.60), (0.40, 0.92, 0.95)
 # Native px. Each light sits on the centre of its source prop's glowing pixels (the .emit.png mask);
 # wall-hung sources get their floor point 2 px in front of the wall base (tools/pixel_lights.py).
 LIGHTS = [
-    dict(name="EntryLamp", type="point", src="wall_lamp", color=WARM, energy=2.0, radius=96, halo=0.55, halo_r=5,
+    dict(name="EntryLamp", type="point", src="wall_lamp", color=WARM, energy=2.7, radius=124, halo=0.55, halo_r=5,
          why="first wall lamp right inside the doorway: a warm pool to walk into out of the junkyard"),
-    dict(name="FlickerLamp", type="point", src="a_lamp", color=WARM, energy=2.0, radius=96, halo=0.55, halo_r=5,
+    dict(name="FlickerLamp", type="point", src="a_lamp", color=WARM, energy=2.7, radius=124, halo=0.55, halo_r=5,
          flicker=[1, 1, 1, 1, 0.45, 1, 0, 1],
          why="halfway lamp with an old bulb: the light flickers in step with the bulb's frames"),
     dict(name="ElevatorBulb", type="point", src="elevator", color=(1.0, 0.88, 0.68), energy=2.6, radius=170,
