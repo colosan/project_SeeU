@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3]
 
-[ext_resource type="PackedScene" path="res://scenes/world/basement_test.tscn" id="1_map"]
+[ext_resource type="Script" path="res://scripts/world/map_host.gd" id="1_host"]
 [ext_resource type="PackedScene" path="res://scenes/ui/side_panel.tscn" id="2_panel"]
 
 [node name="Main" type="Control"]
@@ -33,7 +33,9 @@ canvas_item_default_texture_filter = 0
 size = Vector2i(960, 720)
 render_target_update_mode = 4
 
-[node name="TestMap" parent="Layout/GameView/Viewport" instance=ExtResource("1_map")]
+[node name="MapHost" type="Node2D" parent="Layout/GameView/Viewport"]
+script = ExtResource("1_host")
+initial_map = "res://scenes/world/basement_test.tscn"
 
 [node name="SidePanel" parent="Layout" instance=ExtResource("2_panel")]
 layout_mode = 2

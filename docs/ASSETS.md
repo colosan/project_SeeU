@@ -37,6 +37,21 @@
 | `assets/env/basement/code/*.png` | 직접 그림: `tools/art/gen_junk.py` (그리기 키트 `tools/art/pix.py`) | AI 미사용. 재질 램프 색만 사용, 정면 3/4 시점, 외곽선은 실루엣에 한 번. `a_*.png`는 프레임을 가로로 붙인 애니메이션 |
 | `assets/env/basement/organic/org_*.png` | PixelLab create_map_object로 형태만 생성 → `tools/art/import_pixellab.py`로 우리 램프 색 재매핑, 잡점 정리, 외곽선 | 원본 id는 `import_pixellab.py`의 `SOURCES`에 기록 (`e4317f37…`, `5a3c7f4b…`, `c6b111a2…`, `b4d0d864…`, `bd0a4172…`, `69afa5f4…`) |
 
+## 엘리베이터 홀 (저장소에 포함)
+
+지하 고물상 오른쪽 출구 밖 복도와 낡은 화물 엘리베이터. 모두 직접 그림, AI 미사용(PixelLab 호출 없음). 재질 램프 색만, 정면 3/4 시점, 외곽선은 실루엣에 한 번.
+
+| 파일 | 출처 | 비고 |
+|---|---|---|
+| `assets/env/elevator/hall_floor.png` | 직접 그림, AI 미사용: `tools/gen_elevator_hall_floor.py` | 320x240 원본, 3배 표시. 바닥·벽·배관·바퀴 자국·배수구 |
+| `assets/env/elevator/elevator.png` | 직접 그림, AI 미사용: `tools/art/gen_elevator.py` | 화물 엘리베이터(접이식 철창문, 반원 층 표시기, 갇힌 전구, 위로 이어지는 승강로 기둥) |
+| `assets/env/elevator/a_call.png` | 직접 그림, AI 미사용: `tools/art/gen_elevator.py` | 호출 버튼 깜빡임 6프레임 |
+| `assets/env/elevator/a_lamp.png`, `wall_lamp.png` | 직접 그림, AI 미사용: `tools/art/gen_elevator.py` | 벽등. `a_lamp`는 깜빡이는 8프레임 |
+| `assets/env/elevator/a_drip.png`, `f_drip_puddle.png`, `drum.png` | 직접 그림, AI 미사용: `tools/art/gen_elevator.py` (드럼통은 `gen_junk.barrel` 부품) | 새는 배관 물방울 10프레임, 물웅덩이, 받침 드럼통 |
+| `assets/env/elevator/notice.png`, `cart.png`, `stool.png` | 직접 그림, AI 미사용: `tools/art/gen_elevator.py` (수레 위 상자는 `gen_junk.crate` 부품) | 게시판, 평판 수레, 운전수 의자 |
+
+복도 가장자리 고물(`c_small1/2/3`)은 지하 방의 `assets/env/basement/code/` 파일을 그대로 다시 씁니다.
+
 ## 타일셋
 
 | 파일 | 도구 | ID | 레퍼런스 | 수정 |

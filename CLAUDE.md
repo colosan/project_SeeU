@@ -27,6 +27,7 @@
 - 코드 그림 생성: `python tools/art/gen_junk.py` (없는 파일만 씀, 덮어쓰기는 `--force 파일명`), 미리보기는 `--out=build/art_preview`
 - PixelLab 형태 가져오기: `python tools/art/import_pixellab.py`
 - 지하 방 바닥: `python tools/gen_basement_floor.py` / 지하 방 씬: `python tools/layout_basement.py`
+- 엘리베이터 홀: 그림 `python tools/art/gen_elevator.py`, 바닥 `python tools/gen_elevator_hall_floor.py`, 씬 `python tools/layout_elevator_hall.py`
 - 임포트: `/d/MIDAS/godot/bin/godot.windows.editor.dev.x86_64.console.exe --headless --path . --import`
 - 자동 녹화(검증): `cmd /c tools\record_autoplay.cmd` → `build/autoplay/f*.png`
 - 게임 실행: `/d/MIDAS/godot/bin/godot.windows.editor.dev.x86_64.exe --path .`

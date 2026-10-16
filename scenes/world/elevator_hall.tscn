@@ -1,0 +1,189 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/world/pixel_room.gd" id="room_s"]
+[ext_resource type="Texture2D" path="res://assets/env/elevator/hall_floor.png" id="floor"]
+[ext_resource type="Script" path="res://scripts/world/pixel_prop.gd" id="prop_s"]
+[ext_resource type="Script" path="res://scripts/world/exit_zone.gd" id="exit_s"]
+[ext_resource type="Script" path="res://scripts/world/flicker_light.gd" id="flicker_s"]
+[ext_resource type="PackedScene" path="res://scenes/characters/player.tscn" id="player"]
+[ext_resource type="Texture2D" path="res://assets/env/elevator/elevator.png" id="elevator"]
+[ext_resource type="Texture2D" path="res://assets/env/elevator/a_call.png" id="a_call"]
+[ext_resource type="Texture2D" path="res://assets/env/elevator/stool.png" id="stool"]
+[ext_resource type="Texture2D" path="res://assets/env/elevator/wall_lamp.png" id="wall_lamp"]
+[ext_resource type="Texture2D" path="res://assets/env/elevator/a_lamp.png" id="a_lamp"]
+[ext_resource type="Texture2D" path="res://assets/env/elevator/notice.png" id="notice"]
+[ext_resource type="Texture2D" path="res://assets/env/elevator/drum.png" id="drum"]
+[ext_resource type="Texture2D" path="res://assets/env/elevator/a_drip.png" id="a_drip"]
+[ext_resource type="Texture2D" path="res://assets/env/elevator/f_drip_puddle.png" id="f_drip_puddle"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/code/c_small3.png" id="c_small3"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/code/c_small1.png" id="c_small1"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/code/c_small2.png" id="c_small2"]
+[ext_resource type="Texture2D" path="res://assets/env/elevator/cart.png" id="cart"]
+
+[sub_resource type="Gradient" id="steps"]
+interpolation_mode = 1
+offsets = PackedFloat32Array(0, 0.3, 0.55, 0.78, 0.95)
+colors = PackedColorArray(1, 1, 1, 1, 0.82, 0.82, 0.82, 1, 0.62, 0.62, 0.62, 1, 0.38, 0.38, 0.38, 1, 0, 0, 0, 1)
+
+[sub_resource type="GradientTexture2D" id="lightTex"]
+gradient = SubResource("steps")
+width = 128
+height = 128
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[node name="ElevatorHall" type="Node2D"]
+y_sort_enabled = true
+
+[node name="Dark" type="CanvasModulate" parent="."]
+color = Color(0.36, 0.37, 0.44, 1)
+
+[node name="Room" type="Sprite2D" parent="."]
+z_index = -10
+texture = ExtResource("floor")
+script = ExtResource("room_s")
+walls = Array[Rect2]([Rect2(0, 0, 200, 112), Rect2(200, 0, 120, 88), Rect2(0, 0, 14, 120), Rect2(0, 176, 14, 64), Rect2(306, 0, 14, 240), Rect2(0, 214, 320, 26)])
+
+; freight elevator centred in the alcove at the corridor's end: the alcove walls and the walkway frame it, its shaft frame runs off the top of the map (the way on is up)
+[node name="elevator_0" type="StaticBody2D" parent="."]
+position = Vector2(756, 279)
+script = ExtResource("prop_s")
+texture = ExtResource("elevator")
+solid_fraction = 0.06
+
+; call box right of the gate at hand height (~1.1 m); the pulsing button says the car is waiting
+[node name="a_call_1" type="StaticBody2D" parent="."]
+position = Vector2(888, 195)
+script = ExtResource("prop_s")
+texture = ExtResource("a_call")
+solid = false
+frames = 6
+fps = 4.0
+
+; the operator's stool under the call box, tucked against the right wall, clear of the gate
+[node name="stool_2" type="StaticBody2D" parent="."]
+position = Vector2(888, 303)
+script = ExtResource("prop_s")
+texture = ExtResource("stool")
+
+; first lamp, right by the entrance: the first light you see coming out of the junkyard
+[node name="wall_lamp_3" type="StaticBody2D" parent="."]
+position = Vector2(132, 234)
+script = ExtResource("prop_s")
+texture = ExtResource("wall_lamp")
+solid = false
+
+; second lamp halfway down the corridor, an old bulb that flickers
+[node name="a_lamp_4" type="StaticBody2D" parent="."]
+position = Vector2(450, 234)
+script = ExtResource("prop_s")
+texture = ExtResource("a_lamp")
+solid = false
+frames = 8
+fps = 8.0
+
+; notice board between the lamps at eye level, where people wait; one sheet shows the building floor by floor
+[node name="notice_5" type="StaticBody2D" parent="."]
+position = Vector2(276, 258)
+script = ExtResource("prop_s")
+texture = ExtResource("notice")
+solid = false
+
+; drum set right under the leaking pipe joint (x 119) to catch the drips
+[node name="drum_6" type="StaticBody2D" parent="."]
+position = Vector2(357, 351)
+script = ExtResource("prop_s")
+texture = ExtResource("drum")
+
+; drop falling from the pipe joint into the drum
+[node name="a_drip_7" type="StaticBody2D" parent="."]
+position = Vector2(357, 303)
+script = ExtResource("prop_s")
+texture = ExtResource("a_drip")
+solid = false
+frames = 10
+fps = 10.0
+
+; water splashed out of the overfull drum
+[node name="f_drip_puddle_8" type="StaticBody2D" parent="."]
+position = Vector2(402, 363)
+script = ExtResource("prop_s")
+texture = ExtResource("f_drip_puddle")
+solid = false
+
+; junk that spilled through the doorway, pushed against the wall beside the entrance
+[node name="c_small3_9" type="StaticBody2D" parent="."]
+position = Vector2(124.5, 354)
+script = ExtResource("prop_s")
+texture = ExtResource("c_small3")
+
+; junk drifted in from the junkyard, swept against the south wall
+[node name="c_small1_10" type="StaticBody2D" parent="."]
+position = Vector2(276, 636)
+script = ExtResource("prop_s")
+texture = ExtResource("c_small1")
+
+; more swept junk along the south wall, further down the corridor
+[node name="c_small2_11" type="StaticBody2D" parent="."]
+position = Vector2(547.5, 636)
+script = ExtResource("prop_s")
+texture = ExtResource("c_small2")
+
+; flatbed cart with a crate, parked on the open floor south of the elevator, out of the walkway
+[node name="cart_12" type="StaticBody2D" parent="."]
+position = Vector2(786, 618)
+script = ExtResource("prop_s")
+texture = ExtResource("cart")
+
+; pool of light inside the doorway
+[node name="EntryLamp" type="PointLight2D" parent="."]
+position = Vector2(132, 306)
+color = Color(1, 0.86, 0.62, 1)
+energy = 0.8
+texture = SubResource("lightTex")
+texture_scale = 3.0
+
+; halfway light; flickers with its bulb
+[node name="FlickerLamp" type="PointLight2D" parent="."]
+position = Vector2(450, 318)
+color = Color(1, 0.86, 0.62, 1)
+energy = 0.8
+texture = SubResource("lightTex")
+texture_scale = 3.0
+script = ExtResource("flicker_s")
+pattern = PackedFloat32Array(1.0, 1.0, 1.0, 1.0, 0.45, 1.0, 0.0, 1.0)
+fps = 8.0
+
+; caged bulb in the shaft frame: the brightest spot, the goal
+[node name="ElevatorLamp" type="PointLight2D" parent="."]
+position = Vector2(756, 240)
+color = Color(1, 0.9, 0.72, 1)
+energy = 1.25
+texture = SubResource("lightTex")
+texture_scale = 4.2
+
+; glow of the call button
+[node name="CallGlow" type="PointLight2D" parent="."]
+position = Vector2(888, 168)
+color = Color(0.4, 0.9, 0.95, 1)
+energy = 0.8
+texture = SubResource("lightTex")
+texture_scale = 0.7
+
+; back to basement_test.tscn
+[node name="ToBasement" type="Area2D" parent="."]
+position = Vector2(21, 444)
+script = ExtResource("exit_s")
+target_map = "res://scenes/world/basement_test.tscn"
+target_spawn = &"FromElevator"
+size = Vector2(42, 168)
+
+; just inside the entrance, on the walkway, facing down the corridor
+[node name="FromBasement" type="Marker2D" parent="."]
+position = Vector2(111, 444)
+metadata/facing = "east"
+
+; placed on the entrance spawn when the scene is run on its own; Game moves her on arrival
+[node name="Player" parent="." instance=ExtResource("player")]
+position = Vector2(111, 444)

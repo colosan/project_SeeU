@@ -15,6 +15,10 @@ config/description="Top-down RPG Maker-style VOCALOID fan game (non-commercial).
 run/main_scene="res://scenes/main/main.tscn"
 config/features=PackedStringArray("4.8")
 
+[autoload]
+
+Game="*res://scripts/autoload/game.gd"
+
 [display]
 
 window/size/viewport_width=1280

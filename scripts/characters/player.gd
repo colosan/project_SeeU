@@ -13,13 +13,28 @@ var _last_axis := Vector2.ZERO
 
 
 func _ready() -> void:
+	add_to_group("player")
 	_ensure_input_actions()
 	sprite.sprite_frames = CharacterFrames.build(sprite_dir)
 	sprite.play("idle_" + facing)
 	_apply_camera_limits.call_deferred()
 
 
+## Turn to "north" / "south" / "east" / "west" without moving (e.g. after arriving through a door).
+func face(dir: String) -> void:
+	facing = dir
+	sprite.play("idle_" + facing)
+
+
+## Re-read the map bounds and jump the camera to the player (after a map change or teleport).
+func refresh_camera() -> void:
+	_apply_camera_limits()
+	camera.force_update_scroll()
+	camera.reset_smoothing()
+
+
 ## Keep the camera inside the current map so the void past its edge never shows.
+## Safe to call again whenever the map changes.
 func _apply_camera_limits() -> void:
 	var map := get_tree().get_first_node_in_group("map_bounds")
 	if map == null:

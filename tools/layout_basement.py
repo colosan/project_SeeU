@@ -10,6 +10,7 @@ Room story (screen px, environment drawn at 1/3 and shown at 3x):
   * Somebody bulldozed a walkway from the rug to the exit; pushed junk lines both sides of it.
   * Wall piles are sorted by kind (it is a scrapyard): storage left, audio back-left,
     servers back-right, stage leftovers and overflow along the front.
+  * The exit on the right leads to the elevator hall (ExitZone -> elevator_hall.tscn).
   * A severed power line from the server racks sparks; the TVs it still feeds flicker;
     a ventilation fan turns in the exit corridor. Work lamps follow the walkway.
 """
@@ -92,6 +93,15 @@ LIGHTS = [  # name, x, y, scale, color, energy, reason
     ("ExitLight", 905, 445, 2.4, "0.75, 0.8, 0.95", 0.75, "light from the exit corridor"),
 ]
 
+HALL = "res://scenes/world/elevator_hall.tscn"
+EXITS = [  # name, rect (screen x, y, w, h), target scene, target spawn, reason
+    ("ToElevatorHall", (918, 360, 42, 168), HALL, "FromBasement", "the exit opening in the right wall (native x 306..319, y 120..175)"),
+]
+SPAWNS = [  # name, x, y, facing, reason
+    ("FromElevator", 864, 444, "west", "just inside the exit, at the end of the walkway, facing back into the junkyard"),
+]
+PLAYER_FEET = (18, 14)                                   # half width, height of the player's feet box (screen px)
+
 
 def walk_samples():
     out = []
@@ -132,6 +142,12 @@ def check():
         rx0, ry0, rx1, ry1 = RUG_RECT
         if x0 < rx1 and x1 > rx0 and y0 < ry1 and y1 > ry0:
             problems.append(f"{name}: sits on the rug")
+    for name, sx, sy, _face, _why in SPAWNS:
+        if not any(math.dist((sx, sy), q) <= HALF * S for q in pts):
+            problems.append(f"spawn {name}: not on the walkway")
+        for ename, (ex, ey, ew, eh), *_ in EXITS:
+            if sx - PLAYER_FEET[0] < ex + ew and sx + PLAYER_FEET[0] > ex and sy - PLAYER_FEET[1] < ey + eh and sy > ey:
+                problems.append(f"spawn {name}: inside exit {ename} (would bounce straight back)")
     return problems
 
 
@@ -141,6 +157,7 @@ def write_scene():
          '[ext_resource type="Script" path="res://scripts/world/pixel_room.gd" id="room_s"]',
          '[ext_resource type="Texture2D" path="res://assets/env/basement/room_floor.png" id="floor"]',
          '[ext_resource type="Script" path="res://scripts/world/pixel_prop.gd" id="prop_s"]',
+         '[ext_resource type="Script" path="res://scripts/world/exit_zone.gd" id="exit_s"]',
          '[ext_resource type="PackedScene" path="res://scenes/characters/player.tscn" id="player"]']
     L += [f'[ext_resource type="Texture2D" path="res://assets/env/basement/{f}/{n}.png" id="{n}"]' for f, n in files]
     L += ["", '[sub_resource type="Gradient" id="steps"]', "interpolation_mode = 1",
@@ -163,6 +180,13 @@ def write_scene():
     for n, x, y, s, c, e, why in LIGHTS:
         L += [f"; {why}", f'[node name="{n}" type="PointLight2D" parent="."]', f"position = Vector2({x}, {y})",
               f"color = Color({c}, 1)", f"energy = {e}", 'texture = SubResource("lightTex")', f"texture_scale = {s}", ""]
+    for name, (x, y, w, h), target, spawn, why in EXITS:
+        L += [f"; {why}", f'[node name="{name}" type="Area2D" parent="."]',
+              f"position = Vector2({x + w / 2:g}, {y + h / 2:g})", 'script = ExtResource("exit_s")',
+              f'target_map = "{target}"', f'target_spawn = &"{spawn}"', f"size = Vector2({w}, {h})", ""]
+    for name, x, y, face, why in SPAWNS:
+        L += [f"; {why}", f'[node name="{name}" type="Marker2D" parent="."]', f"position = Vector2({x}, {y})",
+              f'metadata/facing = "{face}"', ""]
     L += ["; SeeU wakes up on the rug", '[node name="Player" parent="." instance=ExtResource("player")]',
           f"position = Vector2({SPAWN[0]}, {SPAWN[1]})", ""]
     with open("scenes/world/basement_test.tscn", "w", encoding="utf-8", newline="\n") as f:

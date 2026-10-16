@@ -28,6 +28,8 @@ RAMPS = {
     "tarp":    _ramp("161e2a 223044 32465e 4a6078 6a7e94"),   # dull blue tarp
     "oil":     _ramp("0c0c0e 141518 1c1e22 262a30 323844"),   # oily puddle
     "spark":   _ramp("6a5a20 c8a838 f0d860 fff4b0 ffffff"),   # spark / hot light (animation only)
+    # room shell (walls / floors) for the elevator hall: flat grey concrete, 6 steps
+    "concrete": _ramp("18181a 222224 2c2c2d 353536 42423f 5a5852"),
 }
 ACCENT = "glow"
 

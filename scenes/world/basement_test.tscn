@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://scripts/world/pixel_room.gd" id="room_s"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/room_floor.png" id="floor"]
 [ext_resource type="Script" path="res://scripts/world/pixel_prop.gd" id="prop_s"]
+[ext_resource type="Script" path="res://scripts/world/exit_zone.gd" id="exit_s"]
 [ext_resource type="PackedScene" path="res://scenes/characters/player.tscn" id="player"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/code/c_main.png" id="c_main"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/organic/org_android_sit.png" id="org_android_sit"]
@@ -326,6 +327,19 @@ color = Color(0.75, 0.8, 0.95, 1)
 energy = 0.75
 texture = SubResource("lightTex")
 texture_scale = 2.4
+
+; the exit opening in the right wall (native x 306..319, y 120..175)
+[node name="ToElevatorHall" type="Area2D" parent="."]
+position = Vector2(939, 444)
+script = ExtResource("exit_s")
+target_map = "res://scenes/world/elevator_hall.tscn"
+target_spawn = &"FromBasement"
+size = Vector2(42, 168)
+
+; just inside the exit, at the end of the walkway, facing back into the junkyard
+[node name="FromElevator" type="Marker2D" parent="."]
+position = Vector2(864, 444)
+metadata/facing = "west"
 
 ; SeeU wakes up on the rug
 [node name="Player" parent="." instance=ExtResource("player")]
