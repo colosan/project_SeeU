@@ -25,9 +25,7 @@
 [ext_resource type="Texture2D" path="res://assets/env/basement/code/t_barrel_tv.png" id="t_barrel_tv"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/code/c_mid.png" id="c_mid"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/code/t_rack_monitor.png" id="t_rack_monitor"]
-[ext_resource type="Texture2D" path="res://assets/env/basement/code/e_6.png" id="e_6"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/code/e_8.png" id="e_8"]
-[ext_resource type="Texture2D" path="res://assets/env/basement/code/e_4.png" id="e_4"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/code/e_10.png" id="e_10"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/code/s_mic.png" id="s_mic"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/organic/org_legs.png" id="org_legs"]
@@ -38,7 +36,6 @@
 [ext_resource type="Texture2D" path="res://assets/env/basement/code/a_fan.png" id="a_fan"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/code/f_puddle1.png" id="f_puddle1"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/code/f_plate1.png" id="f_plate1"]
-[ext_resource type="Texture2D" path="res://assets/env/basement/code/f_coil1.png" id="f_coil1"]
 
 [sub_resource type="Gradient" id="steps"]
 interpolation_mode = 1
@@ -150,7 +147,7 @@ texture = ExtResource("e_7")
 
 ; pushed aside when the walkway was cleared (south side)
 [node name="c_ridge_14" type="StaticBody2D" parent="."]
-position = Vector2(280, 640)
+position = Vector2(250, 745)
 script = ExtResource("prop_s")
 texture = ExtResource("c_ridge")
 
@@ -180,7 +177,7 @@ texture = ExtResource("t_barrel_tv")
 
 ; front-right: stage leftovers
 [node name="c_mid_19" type="StaticBody2D" parent="."]
-position = Vector2(760, 712)
+position = Vector2(800, 752)
 script = ExtResource("prop_s")
 texture = ExtResource("c_mid")
 
@@ -191,49 +188,37 @@ script = ExtResource("prop_s")
 texture = ExtResource("t_rack_monitor")
 
 ; front wall: overflow
-[node name="e_6_21" type="StaticBody2D" parent="."]
-position = Vector2(232, 746)
-script = ExtResource("prop_s")
-texture = ExtResource("e_6")
-
-; front wall: overflow
-[node name="e_8_22" type="StaticBody2D" parent="."]
+[node name="e_8_21" type="StaticBody2D" parent="."]
 position = Vector2(545, 750)
 script = ExtResource("prop_s")
 texture = ExtResource("e_8")
 
-; front wall: overflow
-[node name="e_4_23" type="StaticBody2D" parent="."]
-position = Vector2(805, 744)
-script = ExtResource("prop_s")
-texture = ExtResource("e_4")
-
 ; right wall below the exit
-[node name="e_10_24" type="StaticBody2D" parent="."]
-position = Vector2(908, 664)
+[node name="e_10_22" type="StaticBody2D" parent="."]
+position = Vector2(918, 735)
 script = ExtResource("prop_s")
 texture = ExtResource("e_10")
 
 ; mic stand dropped beside the walkway
-[node name="s_mic_25" type="StaticBody2D" parent="."]
-position = Vector2(540, 624)
+[node name="s_mic_23" type="StaticBody2D" parent="."]
+position = Vector2(548, 700)
 script = ExtResource("prop_s")
 texture = ExtResource("s_mic")
 
 ; robot legs shoved off the walkway
-[node name="org_legs_26" type="StaticBody2D" parent="."]
-position = Vector2(700, 615)
+[node name="org_legs_24" type="StaticBody2D" parent="."]
+position = Vector2(690, 690)
 script = ExtResource("prop_s")
 texture = ExtResource("org_legs")
 
 ; robot pushed off the walkway, lying on its back
-[node name="org_android_lying_27" type="StaticBody2D" parent="."]
+[node name="org_android_lying_25" type="StaticBody2D" parent="."]
 position = Vector2(360, 560)
 script = ExtResource("prop_s")
 texture = ExtResource("org_android_lying")
 
 ; server rack whose status lights still blink
-[node name="a_rack_28" type="StaticBody2D" parent="."]
+[node name="a_rack_26" type="StaticBody2D" parent="."]
 position = Vector2(652, 356)
 script = ExtResource("prop_s")
 texture = ExtResource("a_rack")
@@ -241,7 +226,7 @@ frames = 6
 fps = 5.0
 
 ; severed power line from the racks, sparking at the walkway edge
-[node name="a_spark_29" type="StaticBody2D" parent="."]
+[node name="a_spark_27" type="StaticBody2D" parent="."]
 position = Vector2(612, 456)
 script = ExtResource("prop_s")
 texture = ExtResource("a_spark")
@@ -249,7 +234,7 @@ frames = 8
 fps = 10.0
 
 ; TV on the same line, flickering
-[node name="a_tv_30" type="StaticBody2D" parent="."]
+[node name="a_tv_28" type="StaticBody2D" parent="."]
 position = Vector2(268, 470)
 script = ExtResource("prop_s")
 texture = ExtResource("a_tv")
@@ -257,32 +242,25 @@ frames = 6
 fps = 6.0
 
 ; ventilation fan by the exit corridor
-[node name="a_fan_31" type="StaticBody2D" parent="."]
-position = Vector2(868, 548)
+[node name="a_fan_29" type="StaticBody2D" parent="."]
+position = Vector2(888, 625)
 script = ExtResource("prop_s")
 texture = ExtResource("a_fan")
 frames = 4
 fps = 12.0
 
-; oil leaked onto the walkway
-[node name="f_puddle1_32" type="StaticBody2D" parent="."]
-position = Vector2(640, 528)
+; oil leaking from the storage junk by the left wall
+[node name="f_puddle1_30" type="StaticBody2D" parent="."]
+position = Vector2(200, 520)
 script = ExtResource("prop_s")
 texture = ExtResource("f_puddle1")
 solid = false
 
-; loose plate kicked flat
-[node name="f_plate1_33" type="StaticBody2D" parent="."]
-position = Vector2(330, 506)
+; loose plate kicked off the walkway
+[node name="f_plate1_31" type="StaticBody2D" parent="."]
+position = Vector2(300, 520)
 script = ExtResource("prop_s")
 texture = ExtResource("f_plate1")
-solid = false
-
-; cable coil left by the exit
-[node name="f_coil1_34" type="StaticBody2D" parent="."]
-position = Vector2(805, 486)
-script = ExtResource("prop_s")
-texture = ExtResource("f_coil1")
 solid = false
 
 ; light falling through the chute onto the rug
@@ -319,19 +297,27 @@ texture_scale = 1.2
 
 ; work lamp along the walkway
 [node name="WorkLamp1" type="PointLight2D" parent="."]
-position = Vector2(600, 540)
+position = Vector2(560, 530)
 color = Color(1, 0.85, 0.6, 1)
-energy = 0.55
+energy = 0.6
 texture = SubResource("lightTex")
-texture_scale = 2.2
+texture_scale = 2.0
 
 ; work lamp along the walkway
 [node name="WorkLamp2" type="PointLight2D" parent="."]
-position = Vector2(780, 470)
+position = Vector2(700, 510)
 color = Color(1, 0.85, 0.6, 1)
-energy = 0.55
+energy = 0.6
 texture = SubResource("lightTex")
-texture_scale = 2.2
+texture_scale = 2.0
+
+; work lamp along the walkway
+[node name="WorkLamp3" type="PointLight2D" parent="."]
+position = Vector2(830, 460)
+color = Color(1, 0.85, 0.6, 1)
+energy = 0.6
+texture = SubResource("lightTex")
+texture_scale = 2.0
 
 ; light from the exit corridor
 [node name="ExitLight" type="PointLight2D" parent="."]

@@ -60,37 +60,35 @@ PLAN = [
     (C, "e_1", 52, 438, "left wall: storage junk", {}),
     (C, "e_3", 70, 566, "left wall: storage junk", {}),
     (C, "e_7", 58, 692, "left wall: storage junk", {}),
-    (C, "c_ridge", 280, 640, "pushed aside when the walkway was cleared (south side)", {}),
+    (C, "c_ridge", 250, 745, "pushed aside when the walkway was cleared (south side)", {}),
     (C, "t_crates", 470, 690, "crates shoved off the walkway", {}),
     (C, "c_small1", 790, 380, "back-right: server/tv sorting corner", {}),
     (C, "e_9", 902, 322, "back-right corner fill", {}),
     (C, "t_barrel_tv", 700, 420, "server corner: a TV left on a drum, still powered", {}),
-    (C, "c_mid", 760, 712, "front-right: stage leftovers", {}),
+    (C, "c_mid", 800, 752, "front-right: stage leftovers", {}),
     (C, "t_rack_monitor", 615, 708, "front: rack on a pallet waiting to be sorted", {}),
-    (C, "e_6", 232, 746, "front wall: overflow", {}),
     (C, "e_8", 545, 750, "front wall: overflow", {}),
-    (C, "e_4", 805, 744, "front wall: overflow", {}),
-    (C, "e_10", 908, 664, "right wall below the exit", {}),
-    (C, "s_mic", 540, 624, "mic stand dropped beside the walkway", {}),
-    (O, "org_legs", 700, 615, "robot legs shoved off the walkway", {}),
+    (C, "e_10", 918, 735, "right wall below the exit", {}),
+    (C, "s_mic", 548, 700, "mic stand dropped beside the walkway", {}),
+    (O, "org_legs", 690, 690, "robot legs shoved off the walkway", {}),
     (O, "org_android_lying", 360, 560, "robot pushed off the walkway, lying on its back", {}),
     # 3. power and air (animated)
     (C, "a_rack", 652, 356, "server rack whose status lights still blink", {"frames": 6, "fps": 5}),
     (C, "a_spark", 612, 456, "severed power line from the racks, sparking at the walkway edge", {"frames": 8, "fps": 10}),
     (C, "a_tv", 268, 470, "TV on the same line, flickering", {"frames": 6, "fps": 6}),
-    (C, "a_fan", 868, 548, "ventilation fan by the exit corridor", {"frames": 4, "fps": 12}),
+    (C, "a_fan", 888, 625, "ventilation fan by the exit corridor", {"frames": 4, "fps": 12}),
     # 4. walkable floor details
-    (C, "f_puddle1", 640, 528, "oil leaked onto the walkway", {"solid": False}),
-    (C, "f_plate1", 330, 506, "loose plate kicked flat", {"solid": False}),
-    (C, "f_coil1", 805, 486, "cable coil left by the exit", {"solid": False}),
+    (C, "f_puddle1", 200, 520, "oil leaking from the storage junk by the left wall", {"solid": False}),
+    (C, "f_plate1", 300, 520, "loose plate kicked off the walkway", {"solid": False}),
 ]
 LIGHTS = [  # name, x, y, scale, color, energy, reason
     ("ChuteLight", 480, 420, 4.0, "0.88, 0.92, 1", 1.1, "light falling through the chute onto the rug"),
     ("RackGlow", 652, 318, 1.6, "0.4, 0.9, 0.95", 0.7, "server status lights"),
     ("TVGlow", 268, 440, 1.6, "0.4, 0.95, 0.95", 0.7, "flickering TV"),
     ("SparkLight", 612, 444, 1.2, "1, 0.9, 0.5", 0.6, "sparks"),
-    ("WorkLamp1", 600, 540, 2.2, "1, 0.85, 0.6", 0.55, "work lamp along the walkway"),
-    ("WorkLamp2", 780, 470, 2.2, "1, 0.85, 0.6", 0.55, "work lamp along the walkway"),
+    ("WorkLamp1", 560, 530, 2.0, "1, 0.85, 0.6", 0.6, "work lamp along the walkway"),
+    ("WorkLamp2", 700, 510, 2.0, "1, 0.85, 0.6", 0.6, "work lamp along the walkway"),
+    ("WorkLamp3", 830, 460, 2.0, "1, 0.85, 0.6", 0.6, "work lamp along the walkway"),
     ("ExitLight", 905, 445, 2.4, "0.75, 0.8, 0.95", 0.75, "light from the exit corridor"),
 ]
 
@@ -122,6 +120,14 @@ def check():
             nx, ny = min(max(px, x0), x1), min(max(py, y0), y1)
             if math.dist((px, py), (nx, ny)) < WALK_CLEAR:
                 problems.append(f"{name}: blocks the walkway near ({int(px)}, {int(py)})")
+                break
+        # visual: a prop standing IN FRONT of the walkway must not draw over it
+        im = Image.open(f"assets/env/basement/{folder}/{name}.png")
+        sw, sh = im.width / extra.get("frames", 1) * S, im.height * S
+        vx0, vy0, vx1 = x - sw / 2, y - sh, x + sw / 2
+        for px, py in pts:
+            if vx0 - 6 <= px <= vx1 + 6 and vy0 <= py + HALF * S * 0.75 and py < y:
+                problems.append(f"{name}: drawn over the walkway near ({int(px)}, {int(py)})")
                 break
         rx0, ry0, rx1, ry1 = RUG_RECT
         if x0 < rx1 and x1 > rx0 and y0 < ry1 and y1 > ry0:

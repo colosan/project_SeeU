@@ -40,15 +40,34 @@ def samples(pts, step=1.0):
 
 
 pts = samples(PATH)
-for x, y in pts:
-    d.ellipse((x - HALF, y - HALF * 0.75, x + HALF, y + HALF * 0.75), fill=WALK)
-for i, (x, y) in enumerate(pts[::2]):
-    if (i // 3) % 2:                                       # dashed edge lines, 3 on / 3 off
-        continue
-    for side in (-1, 1):
-        ex, ey = int(x), int(y + side * (HALF * 0.75 + 1))
-        if 14 <= ex < W - 1 and 64 <= ey < H:
-            d.point((ex, ey), fill=DASH if side < 0 else DASH_DARK)
+WALK_FLOOR, TAPE_Y, TAPE_K, ARROW = (66, 66, 63), (176, 146, 70), (30, 28, 26), (120, 112, 92)
+
+
+def in_walk(x, y):
+    return any(((x - px) / HALF) ** 2 + ((y - py) / (HALF * 0.75)) ** 2 <= 1 for px, py in pts[::2])
+
+
+mask = {(x, y) for x in range(14, W - 1) for y in range(64, H) if in_walk(x, y)}
+TRACK, BERM_D, BERM_L = (52, 52, 50), (36, 36, 36), (74, 72, 68)
+for x, y in mask:                                          # swept floor: cleaner and a bit lighter than the rest
+    d.point((x, y), fill=WALK_FLOOR)
+edge = [(x, y) for x, y in mask if any((x + dx, y + dy) not in mask for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))]
+rb = random.Random(7)
+for x, y in edge:                                          # berm: grit pushed to the sides when the lane was cleared
+    if rb.random() < 0.55:
+        w, h = rb.randint(1, 3), rb.randint(1, 2)
+        ox, oy = x + rb.randint(-1, 1), y + rb.randint(-1, 1)
+        d.rectangle((ox, oy, ox + w - 1, oy + h - 1), fill=BERM_D if rb.random() < 0.7 else BERM_L)
+for i in range(3, len(pts) - 3):                           # two worn wheel tracks running toward the exit
+    (x0, y0), (x1, y1) = pts[i - 3], pts[i + 3]
+    ux, uy = x1 - x0, y1 - y0
+    n = (ux * ux + uy * uy) ** 0.5 or 1
+    nx, ny = -uy / n, ux / n
+    cx, cy = pts[i]
+    for off in (-4.5, 4.5):
+        if (i // 9) % 5 == 4:                              # tracks fade in and out
+            continue
+        d.point((round(cx + nx * off), round(cy + ny * off)), fill=TRACK)
 
 # --- the old rug SeeU wakes up on (under the chute), frayed and worn
 RUG = (136, 128, 184, 160)
