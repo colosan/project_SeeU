@@ -1,0 +1,40 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/world/basement_test.tscn" id="1_map"]
+[ext_resource type="PackedScene" path="res://scenes/ui/side_panel.tscn" id="2_panel"]
+
+[node name="Main" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Layout" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 0
+
+[node name="GameView" type="SubViewportContainer" parent="Layout"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 3.0
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="Layout/GameView"]
+handle_input_locally = false
+snap_2d_transforms_to_pixel = true
+canvas_item_default_texture_filter = 0
+size = Vector2i(960, 720)
+render_target_update_mode = 4
+
+[node name="TestMap" parent="Layout/GameView/Viewport" instance=ExtResource("1_map")]
+
+[node name="SidePanel" parent="Layout" instance=ExtResource("2_panel")]
+layout_mode = 2
+size_flags_horizontal = 3

@@ -1,0 +1,10 @@
+# Normalize line endings; Godot text resources stay LF on every OS.
+* text=auto eol=lf
+
+*.png binary
+*.webp binary
+*.ogg binary
+*.wav binary
+*.mp3 binary
+*.ttf binary
+*.otf binary

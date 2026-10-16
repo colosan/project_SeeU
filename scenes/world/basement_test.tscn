@@ -1,0 +1,303 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/world/pixel_room.gd" id="room_s"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/room_floor.png" id="floor"]
+[ext_resource type="Script" path="res://scripts/world/pixel_prop.gd" id="prop_s"]
+[ext_resource type="PackedScene" path="res://scenes/characters/player.tscn" id="player"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/code/e_0.png" id="e_0"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/code/e_1.png" id="e_1"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/code/e_3.png" id="e_3"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/code/e_7.png" id="e_7"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/code/e_6.png" id="e_6"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/code/e_8.png" id="e_8"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/code/e_4.png" id="e_4"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/code/e_9.png" id="e_9"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/code/e_10.png" id="e_10"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/code/e_11.png" id="e_11"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/code/e_5.png" id="e_5"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/code/c_main.png" id="c_main"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/code/c_ridge.png" id="c_ridge"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/code/c_mid.png" id="c_mid"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/code/c_small1.png" id="c_small1"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/code/t_amp_tower.png" id="t_amp_tower"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/code/s_speaker.png" id="s_speaker"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/code/t_crates.png" id="t_crates"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/code/t_rack_monitor.png" id="t_rack_monitor"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/code/c_small2.png" id="c_small2"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/code/t_barrel_tv.png" id="t_barrel_tv"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/code/s_mic.png" id="s_mic"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/organic/org_android_sit.png" id="org_android_sit"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/organic/org_android_lying.png" id="org_android_lying"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/organic/org_arm.png" id="org_arm"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/organic/org_legs.png" id="org_legs"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/organic/org_cables.png" id="org_cables"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/organic/org_head.png" id="org_head"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/code/a_rack.png" id="a_rack"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/code/a_tv.png" id="a_tv"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/code/a_spark.png" id="a_spark"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/code/a_fan.png" id="a_fan"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/code/f_puddle1.png" id="f_puddle1"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/code/f_puddle2.png" id="f_puddle2"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/code/f_plate1.png" id="f_plate1"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/code/f_coil1.png" id="f_coil1"]
+
+[sub_resource type="Gradient" id="steps"]
+interpolation_mode = 1
+offsets = PackedFloat32Array(0, 0.3, 0.55, 0.78, 0.95)
+colors = PackedColorArray(1, 1, 1, 1, 0.82, 0.82, 0.82, 1, 0.62, 0.62, 0.62, 1, 0.38, 0.38, 0.38, 1, 0, 0, 0, 1)
+
+[sub_resource type="GradientTexture2D" id="lightTex"]
+gradient = SubResource("steps")
+width = 128
+height = 128
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[node name="BasementTest" type="Node2D"]
+y_sort_enabled = true
+
+[node name="Dark" type="CanvasModulate" parent="."]
+color = Color(0.36, 0.37, 0.44, 1)
+
+[node name="Room" type="Sprite2D" parent="."]
+z_index = -10
+texture = ExtResource("floor")
+script = ExtResource("room_s")
+
+[node name="f_puddle1_0" type="StaticBody2D" parent="."]
+position = Vector2(470, 545)
+script = ExtResource("prop_s")
+texture = ExtResource("f_puddle1")
+solid = false
+
+[node name="f_puddle2_1" type="StaticBody2D" parent="."]
+position = Vector2(770, 478)
+script = ExtResource("prop_s")
+texture = ExtResource("f_puddle2")
+solid = false
+
+[node name="f_plate1_2" type="StaticBody2D" parent="."]
+position = Vector2(380, 505)
+script = ExtResource("prop_s")
+texture = ExtResource("f_plate1")
+solid = false
+
+[node name="f_coil1_3" type="StaticBody2D" parent="."]
+position = Vector2(645, 615)
+script = ExtResource("prop_s")
+texture = ExtResource("f_coil1")
+solid = false
+
+[node name="e_0_4" type="StaticBody2D" parent="."]
+position = Vector2(95, 300)
+script = ExtResource("prop_s")
+texture = ExtResource("e_0")
+
+[node name="e_1_5" type="StaticBody2D" parent="."]
+position = Vector2(52, 438)
+script = ExtResource("prop_s")
+texture = ExtResource("e_1")
+
+[node name="e_3_6" type="StaticBody2D" parent="."]
+position = Vector2(70, 566)
+script = ExtResource("prop_s")
+texture = ExtResource("e_3")
+
+[node name="e_7_7" type="StaticBody2D" parent="."]
+position = Vector2(58, 692)
+script = ExtResource("prop_s")
+texture = ExtResource("e_7")
+
+[node name="e_6_8" type="StaticBody2D" parent="."]
+position = Vector2(232, 746)
+script = ExtResource("prop_s")
+texture = ExtResource("e_6")
+
+[node name="e_8_9" type="StaticBody2D" parent="."]
+position = Vector2(545, 750)
+script = ExtResource("prop_s")
+texture = ExtResource("e_8")
+
+[node name="e_4_10" type="StaticBody2D" parent="."]
+position = Vector2(805, 744)
+script = ExtResource("prop_s")
+texture = ExtResource("e_4")
+
+[node name="e_9_11" type="StaticBody2D" parent="."]
+position = Vector2(902, 326)
+script = ExtResource("prop_s")
+texture = ExtResource("e_9")
+
+[node name="e_10_12" type="StaticBody2D" parent="."]
+position = Vector2(908, 664)
+script = ExtResource("prop_s")
+texture = ExtResource("e_10")
+
+[node name="e_11_13" type="StaticBody2D" parent="."]
+position = Vector2(332, 258)
+script = ExtResource("prop_s")
+texture = ExtResource("e_11")
+
+[node name="e_5_14" type="StaticBody2D" parent="."]
+position = Vector2(708, 272)
+script = ExtResource("prop_s")
+texture = ExtResource("e_5")
+
+[node name="c_main_15" type="StaticBody2D" parent="."]
+position = Vector2(470, 350)
+script = ExtResource("prop_s")
+texture = ExtResource("c_main")
+
+[node name="c_ridge_16" type="StaticBody2D" parent="."]
+position = Vector2(300, 618)
+script = ExtResource("prop_s")
+texture = ExtResource("c_ridge")
+
+[node name="c_mid_17" type="StaticBody2D" parent="."]
+position = Vector2(738, 708)
+script = ExtResource("prop_s")
+texture = ExtResource("c_mid")
+
+[node name="c_small1_18" type="StaticBody2D" parent="."]
+position = Vector2(782, 388)
+script = ExtResource("prop_s")
+texture = ExtResource("c_small1")
+
+[node name="t_amp_tower_19" type="StaticBody2D" parent="."]
+position = Vector2(250, 402)
+script = ExtResource("prop_s")
+texture = ExtResource("t_amp_tower")
+
+[node name="s_speaker_20" type="StaticBody2D" parent="."]
+position = Vector2(188, 370)
+script = ExtResource("prop_s")
+texture = ExtResource("s_speaker")
+
+[node name="t_crates_21" type="StaticBody2D" parent="."]
+position = Vector2(528, 642)
+script = ExtResource("prop_s")
+texture = ExtResource("t_crates")
+
+[node name="t_rack_monitor_22" type="StaticBody2D" parent="."]
+position = Vector2(604, 702)
+script = ExtResource("prop_s")
+texture = ExtResource("t_rack_monitor")
+
+[node name="c_small2_23" type="StaticBody2D" parent="."]
+position = Vector2(118, 336)
+script = ExtResource("prop_s")
+texture = ExtResource("c_small2")
+
+[node name="t_barrel_tv_24" type="StaticBody2D" parent="."]
+position = Vector2(668, 478)
+script = ExtResource("prop_s")
+texture = ExtResource("t_barrel_tv")
+
+[node name="s_mic_25" type="StaticBody2D" parent="."]
+position = Vector2(612, 444)
+script = ExtResource("prop_s")
+texture = ExtResource("s_mic")
+
+[node name="org_android_sit_26" type="StaticBody2D" parent="."]
+position = Vector2(356, 398)
+script = ExtResource("prop_s")
+texture = ExtResource("org_android_sit")
+
+[node name="org_android_lying_27" type="StaticBody2D" parent="."]
+position = Vector2(640, 552)
+script = ExtResource("prop_s")
+texture = ExtResource("org_android_lying")
+
+[node name="org_arm_28" type="StaticBody2D" parent="."]
+position = Vector2(416, 566)
+script = ExtResource("prop_s")
+texture = ExtResource("org_arm")
+
+[node name="org_legs_29" type="StaticBody2D" parent="."]
+position = Vector2(706, 612)
+script = ExtResource("prop_s")
+texture = ExtResource("org_legs")
+
+[node name="org_cables_30" type="StaticBody2D" parent="."]
+position = Vector2(560, 416)
+script = ExtResource("prop_s")
+texture = ExtResource("org_cables")
+
+[node name="org_head_31" type="StaticBody2D" parent="."]
+position = Vector2(382, 604)
+script = ExtResource("prop_s")
+texture = ExtResource("org_head")
+
+[node name="a_rack_32" type="StaticBody2D" parent="."]
+position = Vector2(652, 360)
+script = ExtResource("prop_s")
+texture = ExtResource("a_rack")
+frames = 6
+fps = 5.0
+
+[node name="a_tv_33" type="StaticBody2D" parent="."]
+position = Vector2(296, 474)
+script = ExtResource("prop_s")
+texture = ExtResource("a_tv")
+frames = 6
+fps = 6.0
+
+[node name="a_spark_34" type="StaticBody2D" parent="."]
+position = Vector2(560, 504)
+script = ExtResource("prop_s")
+texture = ExtResource("a_spark")
+frames = 8
+fps = 10.0
+
+[node name="a_fan_35" type="StaticBody2D" parent="."]
+position = Vector2(862, 566)
+script = ExtResource("prop_s")
+texture = ExtResource("a_fan")
+frames = 4
+fps = 12.0
+
+[node name="ChuteLight" type="PointLight2D" parent="."]
+position = Vector2(480, 410)
+color = Color(0.88, 0.92, 1, 1)
+energy = 1.1
+texture = SubResource("lightTex")
+texture_scale = 4.6
+
+[node name="RackGlow" type="PointLight2D" parent="."]
+position = Vector2(652, 320)
+color = Color(0.4, 0.9, 0.95, 1)
+energy = 0.7
+texture = SubResource("lightTex")
+texture_scale = 1.6
+
+[node name="TVGlow" type="PointLight2D" parent="."]
+position = Vector2(296, 440)
+color = Color(0.4, 0.95, 0.95, 1)
+energy = 0.75
+texture = SubResource("lightTex")
+texture_scale = 1.8
+
+[node name="SparkLight" type="PointLight2D" parent="."]
+position = Vector2(565, 490)
+color = Color(1, 0.9, 0.5, 1)
+energy = 0.6
+texture = SubResource("lightTex")
+texture_scale = 1.2
+
+[node name="StageLamp" type="PointLight2D" parent="."]
+position = Vector2(740, 620)
+color = Color(1, 0.75, 0.45, 1)
+energy = 0.75
+texture = SubResource("lightTex")
+texture_scale = 2.4
+
+[node name="ExitLight" type="PointLight2D" parent="."]
+position = Vector2(905, 445)
+color = Color(0.7, 0.75, 0.9, 1)
+energy = 0.65
+texture = SubResource("lightTex")
+texture_scale = 2.2
+
+[node name="Player" parent="." instance=ExtResource("player")]
+position = Vector2(500, 452)

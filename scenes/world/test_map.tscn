@@ -1,0 +1,15 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/wang_terrain_map.gd" id="1_terrain"]
+[ext_resource type="PackedScene" path="res://scenes/characters/player.tscn" id="2_player"]
+
+[node name="TestMap" type="Node2D"]
+y_sort_enabled = true
+
+[node name="Ground" type="TileMapLayer" parent="."]
+z_index = -1
+scale = Vector2(2, 2)
+script = ExtResource("1_terrain")
+
+[node name="Player" parent="." instance=ExtResource("2_player")]
+position = Vector2(800, 480)

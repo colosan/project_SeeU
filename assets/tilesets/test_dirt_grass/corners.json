@@ -1,0 +1,135 @@
+{
+ "tile_size": 32,
+ "lower": "dirt",
+ "upper": "grass",
+ "tiles": [
+  {
+   "x": 0,
+   "y": 0,
+   "nw": "grass",
+   "ne": "grass",
+   "sw": "dirt",
+   "se": "grass"
+  },
+  {
+   "x": 1,
+   "y": 0,
+   "nw": "grass",
+   "ne": "dirt",
+   "sw": "grass",
+   "se": "dirt"
+  },
+  {
+   "x": 2,
+   "y": 0,
+   "nw": "dirt",
+   "ne": "grass",
+   "sw": "dirt",
+   "se": "dirt"
+  },
+  {
+   "x": 3,
+   "y": 0,
+   "nw": "grass",
+   "ne": "grass",
+   "sw": "dirt",
+   "se": "dirt"
+  },
+  {
+   "x": 0,
+   "y": 1,
+   "nw": "dirt",
+   "ne": "grass",
+   "sw": "grass",
+   "se": "dirt"
+  },
+  {
+   "x": 1,
+   "y": 1,
+   "nw": "grass",
+   "ne": "dirt",
+   "sw": "dirt",
+   "se": "dirt"
+  },
+  {
+   "x": 2,
+   "y": 1,
+   "nw": "dirt",
+   "ne": "dirt",
+   "sw": "dirt",
+   "se": "dirt"
+  },
+  {
+   "x": 3,
+   "y": 1,
+   "nw": "dirt",
+   "ne": "dirt",
+   "sw": "dirt",
+   "se": "grass"
+  },
+  {
+   "x": 0,
+   "y": 2,
+   "nw": "grass",
+   "ne": "dirt",
+   "sw": "grass",
+   "se": "grass"
+  },
+  {
+   "x": 1,
+   "y": 2,
+   "nw": "dirt",
+   "ne": "dirt",
+   "sw": "grass",
+   "se": "grass"
+  },
+  {
+   "x": 2,
+   "y": 2,
+   "nw": "dirt",
+   "ne": "dirt",
+   "sw": "grass",
+   "se": "dirt"
+  },
+  {
+   "x": 3,
+   "y": 2,
+   "nw": "dirt",
+   "ne": "grass",
+   "sw": "dirt",
+   "se": "grass"
+  },
+  {
+   "x": 0,
+   "y": 3,
+   "nw": "grass",
+   "ne": "grass",
+   "sw": "grass",
+   "se": "grass"
+  },
+  {
+   "x": 1,
+   "y": 3,
+   "nw": "grass",
+   "ne": "grass",
+   "sw": "grass",
+   "se": "dirt"
+  },
+  {
+   "x": 2,
+   "y": 3,
+   "nw": "grass",
+   "ne": "dirt",
+   "sw": "dirt",
+   "se": "grass"
+  },
+  {
+   "x": 3,
+   "y": 3,
+   "nw": "dirt",
+   "ne": "grass",
+   "sw": "grass",
+   "se": "grass"
+  }
+ ]
+}
