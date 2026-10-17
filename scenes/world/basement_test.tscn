@@ -2,11 +2,16 @@
 
 [ext_resource type="Script" path="res://scripts/world/pixel_lighting.gd" id="lighting_s"]
 [ext_resource type="Script" path="res://scripts/world/pixel_light.gd" id="light_s"]
+[ext_resource type="Script" path="res://scripts/world/room_tone.gd" id="tone_s"]
+[ext_resource type="Script" path="res://scripts/world/chute_drop.gd" id="drop_s"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_drop.png" id="dg_drop"]
 [ext_resource type="Script" path="res://scripts/world/pixel_room.gd" id="room_s"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/room_floor.png" id="floor"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/room_front.png" id="front"]
 [ext_resource type="Script" path="res://scripts/world/pixel_prop.gd" id="prop_s"]
 [ext_resource type="Script" path="res://scripts/world/exit_zone.gd" id="exit_s"]
 [ext_resource type="PackedScene" path="res://scenes/characters/player.tscn" id="player"]
+[ext_resource type="Script" path="res://scripts/world/interactable.gd" id="interact_s"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_c_main.png" id="dg_c_main"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_s_recycle.png" id="dg_s_recycle"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/organic/org_android_sit.png" id="org_android_sit"]
@@ -22,18 +27,15 @@
 [ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_e_1.png" id="dg_e_1"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_e_3.png" id="dg_e_3"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_a_meme_fine.png" id="dg_a_meme_fine"]
-[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_e_7.png" id="dg_e_7"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_c_ridge.png" id="dg_c_ridge"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_t_crates.png" id="dg_t_crates"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_c_small1.png" id="dg_c_small1"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_e_9.png" id="dg_e_9"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_t_barrel_tv.png" id="dg_t_barrel_tv"]
-[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_c_mid.png" id="dg_c_mid"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_z_stage_1.png" id="dg_z_stage_1"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_t_rack_monitor.png" id="dg_t_rack_monitor"]
-[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_e_8.png" id="dg_e_8"]
-[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_e_10.png" id="dg_e_10"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/organic/org_android_lying.png" id="org_android_lying"]
-[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_s_gcbot.png" id="dg_s_gcbot"]
+[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_a_gcbot.png" id="dg_a_gcbot"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_a_rack.png" id="dg_a_rack"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_a_spark.png" id="dg_a_spark"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_a_tv.png" id="dg_a_tv"]
@@ -47,10 +49,23 @@ y_sort_enabled = true
 script = ExtResource("lighting_s")
 ambient = Color(0.46, 0.48, 0.57, 1)
 
+; the air the deletion chute keeps pulling down - the room breathes
+[node name="RoomTone" type="AudioStreamPlayer" parent="."]
+script = ExtResource("tone_s")
+tone = "chute"
+
+; the chute keeps dropping deleted things onto the heap now and then (the recycle bin is never done)
+[node name="ChuteDrop" type="Node2D" parent="."]
+position = Vector2(480, 352)
+script = ExtResource("drop_s")
+texture = ExtResource("dg_drop")
+
 [node name="Room" type="Sprite2D" parent="."]
 z_index = -10
 texture = ExtResource("floor")
 script = ExtResource("room_s")
+front = ExtResource("front")
+walls = Array[Rect2]([Rect2(0, 0, 320, 64), Rect2(0, 0, 14, 240), Rect2(306, 0, 14, 120), Rect2(306, 176, 14, 64), Rect2(0, 228, 320, 12)])
 
 ; deletion chute drop: the biggest heap of deleted data right under the chute
 [node name="dg_c_main_0" type="StaticBody2D" parent="."]
@@ -64,11 +79,25 @@ position = Vector2(262.5, 372)
 script = ExtResource("prop_s")
 texture = ExtResource("dg_s_recycle")
 
+[node name="Interact" type="Area2D" parent="dg_s_recycle_1"]
+position = Vector2(0, -36)
+script = ExtResource("interact_s")
+size = Vector2(171, 102)
+lines = PackedStringArray("쓰러진 휴지통. 구겨진 파일들이 쏟아져 나와 있다.")
+prompt = "조사"
+
 ; a deprecated avatar that slid down the heap, slumped at its foot
 [node name="org_android_sit_2" type="StaticBody2D" parent="."]
 position = Vector2(351, 399)
 script = ExtResource("prop_s")
 texture = ExtResource("org_android_sit")
+
+[node name="Interact" type="Area2D" parent="org_android_sit_2"]
+position = Vector2(0, -30)
+script = ExtResource("interact_s")
+size = Vector2(102, 90)
+lines = PackedStringArray("고개를 떨군 채 앉아 있는 아바타.", "판매가 끝난 모델 같다. 대답이 없다.")
+prompt = "조사"
 
 ; cables spilling from the heap
 [node name="org_cables_3" type="StaticBody2D" parent="."]
@@ -82,11 +111,25 @@ position = Vector2(430.5, 381)
 script = ExtResource("prop_s")
 texture = ExtResource("dg_s_dialog_404")
 
+[node name="Interact" type="Area2D" parent="dg_s_dialog_404_4"]
+position = Vector2(0, -27)
+script = ExtResource("interact_s")
+size = Vector2(165, 84)
+lines = PackedStringArray("금이 간 오류 창이다.", "'404 — Voice Not Found.'", "나와 같이 떨어진 것 같다.")
+prompt = "조사"
+
 ; her own discontinued software box (EOL), dropped on its back beside the rug she wakes on
 [node name="dg_s_softbox_5" type="StaticBody2D" parent="."]
 position = Vector2(628.5, 420)
 script = ExtResource("prop_s")
 texture = ExtResource("dg_s_softbox")
+
+[node name="Interact" type="Area2D" parent="dg_s_softbox_5"]
+position = Vector2(0, -15)
+script = ExtResource("interact_s")
+size = Vector2(87, 60)
+lines = PackedStringArray("낡은 소프트웨어 상자.", "표지에 커다랗게 찍혀 있다. EOL — 판매 종료.")
+prompt = "조사"
 
 ; 127.0.0.1 doormat at the rug's edge: there's no place like home
 [node name="dg_f_home_6" type="StaticBody2D" parent="."]
@@ -94,6 +137,13 @@ position = Vector2(499.5, 504)
 script = ExtResource("prop_s")
 texture = ExtResource("dg_f_home")
 solid = false
+
+[node name="Interact" type="Area2D" parent="dg_f_home_6"]
+position = Vector2(0, -8.25)
+script = ExtResource("interact_s")
+size = Vector2(129, 46.5)
+lines = PackedStringArray("발매트에 주소가 적혀 있다. 127.0.0.1.", "집만 한 곳은 없다.")
+prompt = "조사"
 
 ; back wall: overflow of the deletion heap
 [node name="dg_e_11_7" type="StaticBody2D" parent="."]
@@ -119,139 +169,212 @@ position = Vector2(178.5, 411)
 script = ExtResource("prop_s")
 texture = ExtResource("dg_t_amp_tower")
 
-; back-left corner fill
+; back-left corner fill, pushed into the corner (its edge tucks behind the left wall)
 [node name="dg_e_0_11" type="StaticBody2D" parent="."]
-position = Vector2(94.5, 300)
+position = Vector2(160.5, 300)
 script = ExtResource("prop_s")
 texture = ExtResource("dg_e_0")
 
-; left wall: compressed archives (.zip) of deleted storage
+; left wall: compressed archives (.zip) of deleted storage, pushed against the wall
 [node name="dg_e_1_12" type="StaticBody2D" parent="."]
-position = Vector2(51, 438)
+position = Vector2(144, 438)
 script = ExtResource("prop_s")
 texture = ExtResource("dg_e_1")
 
-; left wall: compressed archives (.zip) of deleted storage
+; left wall: compressed archives (.zip) of deleted storage, pushed against the wall
 [node name="dg_e_3_13" type="StaticBody2D" parent="."]
-position = Vector2(70.5, 567)
+position = Vector2(136.5, 504)
 script = ExtResource("prop_s")
 texture = ExtResource("dg_e_3")
 
 ; a corner where a tiny burning room keeps saying everything is fine (an unhandled error)
 [node name="dg_a_meme_fine_14" type="StaticBody2D" parent="."]
-position = Vector2(159, 639)
+position = Vector2(159, 576)
 script = ExtResource("prop_s")
 texture = ExtResource("dg_a_meme_fine")
 frames = 4
 fps = 8.0
 
-; left wall: storage junk
-[node name="dg_e_7_15" type="StaticBody2D" parent="."]
-position = Vector2(58.5, 693)
-script = ExtResource("prop_s")
-texture = ExtResource("dg_e_7")
+[node name="Interact" type="Area2D" parent="dg_a_meme_fine_14"]
+position = Vector2(0, -22.5)
+script = ExtResource("interact_s")
+size = Vector2(138, 75)
+lines = PackedStringArray("작은 방 하나가 불타고 있다.", "안에서 누군가 '괜찮아'라고 중얼거린다.")
+prompt = "조사"
 
-; pushed aside when the walkway was cleared (south side)
-[node name="dg_c_ridge_16" type="StaticBody2D" parent="."]
-position = Vector2(249, 744)
+; pushed aside when the walkway was cleared (south side), banked up against the front wall that hides its foot
+[node name="dg_c_ridge_15" type="StaticBody2D" parent="."]
+position = Vector2(246, 681)
 script = ExtResource("prop_s")
 texture = ExtResource("dg_c_ridge")
 
-; archives shoved off the walkway, slumped against each other
-[node name="dg_t_crates_17" type="StaticBody2D" parent="."]
-position = Vector2(469.5, 690)
+; archives shoved off the walkway against the front wall, slumped against each other
+[node name="dg_t_crates_16" type="StaticBody2D" parent="."]
+position = Vector2(472.5, 681)
 script = ExtResource("prop_s")
 texture = ExtResource("dg_t_crates")
 
+[node name="Interact" type="Area2D" parent="dg_t_crates_16"]
+position = Vector2(0, -24.75)
+script = ExtResource("interact_s")
+size = Vector2(129, 79.5)
+lines = PackedStringArray("벽 쪽으로 밀어 둔 압축 파일 상자들.", "라벨이 바래서 무엇이 들었는지 알 수 없다.")
+prompt = "조사"
+
 ; back-right: legacy servers and dead displays
-[node name="dg_c_small1_18" type="StaticBody2D" parent="."]
+[node name="dg_c_small1_17" type="StaticBody2D" parent="."]
 position = Vector2(789, 381)
 script = ExtResource("prop_s")
 texture = ExtResource("dg_c_small1")
 
-; back-right corner fill
-[node name="dg_e_9_19" type="StaticBody2D" parent="."]
-position = Vector2(903, 321)
+; back-right corner fill, pushed into the corner (its edge tucks behind the right wall)
+[node name="dg_e_9_18" type="StaticBody2D" parent="."]
+position = Vector2(813, 321)
 script = ExtResource("prop_s")
 texture = ExtResource("dg_e_9")
 
 ; a display left on a bit bucket, still powered
-[node name="dg_t_barrel_tv_20" type="StaticBody2D" parent="."]
+[node name="dg_t_barrel_tv_19" type="StaticBody2D" parent="."]
 position = Vector2(699, 420)
 script = ExtResource("prop_s")
 texture = ExtResource("dg_t_barrel_tv")
 
-; front-right: leftovers of a virtual stage
-[node name="dg_c_mid_21" type="StaticBody2D" parent="."]
-position = Vector2(799.5, 753)
-script = ExtResource("prop_s")
-texture = ExtResource("dg_c_mid")
+[node name="Interact" type="Area2D" parent="dg_t_barrel_tv_19"]
+position = Vector2(0, -25.5)
+script = ExtResource("interact_s")
+size = Vector2(78, 81)
+lines = PackedStringArray("비트 버킷 위에 놓인 화면.", "아직 전원이 들어와 있다. 아무것도 비추지 않는다.")
+prompt = "조사"
 
-; a legacy server fallen onto a pallet waiting for the next collection
-[node name="dg_t_rack_monitor_22" type="StaticBody2D" parent="."]
-position = Vector2(615, 708)
+; front-right: leftovers of a virtual stage, a dismantled stage set against the front wall below the exit (the wall hides its foot); low enough not to cover the walkway's last stretch
+[node name="dg_z_stage_1_20" type="StaticBody2D" parent="."]
+position = Vector2(738, 681)
+script = ExtResource("prop_s")
+texture = ExtResource("dg_z_stage_1")
+
+[node name="Interact" type="Area2D" parent="dg_z_stage_1_20"]
+position = Vector2(0, -31.5)
+script = ExtResource("interact_s")
+size = Vector2(378, 93)
+lines = PackedStringArray("해체된 가상 무대의 조각.", "한때 누군가 이 위에서 노래했을 것이다.")
+prompt = "조사"
+
+; a legacy server fallen onto a pallet against the front wall, waiting for the next collection
+[node name="dg_t_rack_monitor_21" type="StaticBody2D" parent="."]
+position = Vector2(615, 681)
 script = ExtResource("prop_s")
 texture = ExtResource("dg_t_rack_monitor")
 
-; front wall: overflow
-[node name="dg_e_8_23" type="StaticBody2D" parent="."]
-position = Vector2(544.5, 750)
-script = ExtResource("prop_s")
-texture = ExtResource("dg_e_8")
+[node name="Interact" type="Area2D" parent="dg_t_rack_monitor_21"]
+position = Vector2(0, -22.5)
+script = ExtResource("interact_s")
+size = Vector2(120, 75)
+lines = PackedStringArray("팔레트 위에 쓰러진 서버.", "다음 수거를 기다리는 것 같다.")
+prompt = "조사"
 
-; right wall below the exit
-[node name="dg_e_10_24" type="StaticBody2D" parent="."]
-position = Vector2(918, 735)
-script = ExtResource("prop_s")
-texture = ExtResource("dg_e_10")
-
-; a deprecated avatar pushed off the walkway, lying on its back
-[node name="org_android_lying_25" type="StaticBody2D" parent="."]
-position = Vector2(360, 561)
+; a deprecated avatar pushed off the walkway, lying on its back on the ridge's shoulder (high enough that its head and chest show over the ridge; lower down the ridge swallowed it whole)
+[node name="org_android_lying_22" type="StaticBody2D" parent="."]
+position = Vector2(366, 534)
 script = ExtResource("prop_s")
 texture = ExtResource("org_android_lying")
 
-; the garbage collector, parked by the exit between collection cycles - the room's threat
-[node name="dg_s_gcbot_26" type="StaticBody2D" parent="."]
-position = Vector2(868.5, 393)
+[node name="Interact" type="Area2D" parent="org_android_lying_22"]
+position = Vector2(0, -19.5)
+script = ExtResource("interact_s")
+size = Vector2(144, 69)
+lines = PackedStringArray("고물 둔덕에 반쯤 묻혀 누운 아바타.", "길을 치울 때 밀려난 것 같다.")
+prompt = "조사"
+
+; the garbage collector, parked by the exit between collection cycles - the room's threat; its eye breathes like a sleep light (asleep, not dead)
+[node name="dg_a_gcbot_23" type="StaticBody2D" parent="."]
+position = Vector2(859.5, 393)
 script = ExtResource("prop_s")
-texture = ExtResource("dg_s_gcbot")
+texture = ExtResource("dg_a_gcbot")
+frames = 8
+fps = 4.0
+
+[node name="Interact" type="Area2D" parent="dg_a_gcbot_23"]
+position = Vector2(0, -21)
+script = ExtResource("interact_s")
+size = Vector2(123, 72)
+lines = PackedStringArray("멈춰 선 청소 로봇. 등판에 GC라고 적혀 있다.", "지금은 잠들어 있다. 언젠가 다시 움직일 것이다.")
+prompt = "조사"
 
 ; a legacy server leaning on the heap; a few status lights still blink
-[node name="dg_a_rack_27" type="StaticBody2D" parent="."]
+[node name="dg_a_rack_24" type="StaticBody2D" parent="."]
 position = Vector2(651, 357)
 script = ExtResource("prop_s")
 texture = ExtResource("dg_a_rack")
 frames = 6
 fps = 5.0
 
+[node name="Interact" type="Area2D" parent="dg_a_rack_24"]
+position = Vector2(0, -25.5)
+script = ExtResource("interact_s")
+size = Vector2(96, 81)
+lines = PackedStringArray("더미에 기댄 오래된 서버.", "상태 등 몇 개가 아직 깜빡인다.")
+prompt = "조사"
+
 ; severed power line from the servers, sparking at the walkway edge
-[node name="dg_a_spark_28" type="StaticBody2D" parent="."]
+[node name="dg_a_spark_25" type="StaticBody2D" parent="."]
 position = Vector2(612, 456)
 script = ExtResource("prop_s")
 texture = ExtResource("dg_a_spark")
 frames = 8
 fps = 10.0
+flashes = true
+sound = "spark"
+sound_frames = PackedInt32Array(0)
+sound_db = -16.0
+
+[node name="Interact" type="Area2D" parent="dg_a_spark_25"]
+position = Vector2(0, -16.5)
+script = ExtResource("interact_s")
+size = Vector2(114, 63)
+lines = PackedStringArray("끊어진 전선에서 불꽃이 튄다.", "서버들로 이어진 선이다. 가까이 가지 않는 편이 좋겠다.")
+prompt = "조사"
 
 ; a display on the same line, knocked onto scrap, still flickering an error
-[node name="dg_a_tv_29" type="StaticBody2D" parent="."]
-position = Vector2(268.5, 471)
+[node name="dg_a_tv_26" type="StaticBody2D" parent="."]
+position = Vector2(295.5, 471)
 script = ExtResource("prop_s")
 texture = ExtResource("dg_a_tv")
 frames = 6
 fps = 6.0
+flashes = true
+
+[node name="Interact" type="Area2D" parent="dg_a_tv_26"]
+position = Vector2(0, -16.5)
+script = ExtResource("interact_s")
+size = Vector2(123, 63)
+lines = PackedStringArray("끊어진 전선에 아직 매달린 화면.", "같은 오류만 깜빡이고 있다.")
+prompt = "조사"
 
 ; work lamp at the walkway's first stretch, next to the sparking line it was plugged into
-[node name="dg_s_worklamp_30" type="StaticBody2D" parent="."]
+[node name="dg_s_worklamp_27" type="StaticBody2D" parent="."]
 position = Vector2(669, 459)
 script = ExtResource("prop_s")
 texture = ExtResource("dg_s_worklamp")
 
+[node name="Interact" type="Area2D" parent="dg_s_worklamp_27"]
+position = Vector2(0, -28.5)
+script = ExtResource("interact_s")
+size = Vector2(60, 87)
+lines = PackedStringArray("누군가 길을 치우면서 세워 둔 작업등.", "청소 로봇의 작업반이 두고 간 것 같다.")
+prompt = "조사"
+
 ; work lamp on the last stretch before the exit, in front of the server corner
-[node name="dg_s_worklamp_31" type="StaticBody2D" parent="."]
+[node name="dg_s_worklamp_28" type="StaticBody2D" parent="."]
 position = Vector2(792, 408)
 script = ExtResource("prop_s")
 texture = ExtResource("dg_s_worklamp")
+
+[node name="Interact" type="Area2D" parent="dg_s_worklamp_28"]
+position = Vector2(0, -28.5)
+script = ExtResource("interact_s")
+size = Vector2(60, 87)
+lines = PackedStringArray("누군가 길을 치우면서 세워 둔 작업등.", "청소 로봇의 작업반이 두고 간 것 같다.")
+prompt = "조사"
 
 ; cold light falling through the ceiling chute: a shaft of haze and dust that lands on the rug where she wakes up - the brightest, cleanest spot in the room
 [node name="ChuteBeam" type="Node2D" parent="."]
@@ -318,7 +441,7 @@ halo_radius = 3
 
 ; the flickering TV fed by the severed line: its screen throws cyan onto the floor in front of it
 [node name="TVFlicker" type="Node2D" parent="."]
-position = Vector2(282.75, 474)
+position = Vector2(309.75, 474)
 script = ExtResource("light_s")
 type = 1
 color = Color(0.4, 0.92, 0.95, 1)
@@ -331,7 +454,7 @@ halo = 0.3
 halo_radius = 4
 flicker = PackedFloat32Array(0.35, 0.7, 0.35, 1, 0.35, 0)
 flicker_fps = 6
-sync_prop = NodePath("../dg_a_tv_29")
+sync_prop = NodePath("../dg_a_tv_26")
 
 ; the TV left on a drum in the server corner, still powered
 [node name="BarrelTV" type="Node2D" parent="."]
@@ -349,13 +472,13 @@ halo_radius = 3
 
 ; the little burning room in the corner: its flames light the junk around it (everything is fine)
 [node name="MemeFire" type="Node2D" parent="."]
-position = Vector2(202.5, 642)
+position = Vector2(202.5, 579)
 script = ExtResource("light_s")
 type = 0
 color = Color(1, 0.62, 0.3, 1)
-energy = 1.4
+energy = 1.9
 height = 8.5
-radius = 40
+radius = 54
 halo = 0.35
 halo_radius = 4
 flicker = PackedFloat32Array(1, 0.8, 1, 0.7)
@@ -375,7 +498,23 @@ halo = 0.6
 halo_radius = 5
 flicker = PackedFloat32Array(1, 0.55, 0, 0, 1, 0, 0.55, 0)
 flicker_fps = 10
-sync_prop = NodePath("../dg_a_spark_28")
+sync_prop = NodePath("../dg_a_spark_25")
+
+; the garbage collector's sleep light: a faint cyan breath on its own hull and the floor right in front - the room's threat is only asleep (examine: it will move again)
+[node name="GCSleep" type="Node2D" parent="."]
+position = Vector2(894, 396)
+script = ExtResource("light_s")
+type = 0
+color = Color(0.4, 0.92, 0.95, 1)
+energy = 0.9
+height = 20.5
+radius = 20
+casts_shadows = false
+halo = 0.3
+halo_radius = 2
+flicker = PackedFloat32Array(0, 0, 0.5, 1, 1, 0.5, 0, 0)
+flicker_fps = 4
+sync_prop = NodePath("../dg_a_gcbot_23")
 
 ; the exit opening in the right wall (native x 306..319, y 120..175)
 [node name="ToElevatorHall" type="Area2D" parent="."]

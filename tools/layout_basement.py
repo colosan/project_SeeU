@@ -10,6 +10,9 @@ Room story (screen px, environment drawn at 1/3 and shown at 3x):
   * Somebody bulldozed a walkway from the rug to the exit; pushed junk lines both sides of it.
   * Wall piles are sorted by kind (it is a scrapyard): storage left, audio back-left,
     servers back-right, stage leftovers and overflow along the front.
+  * The walls are solid and have depth (room_front.png is drawn over everything): every pile stands on the
+    floor (its footprint never enters a wall), only its outer edge tucks behind a wall it is pushed against,
+    and the front wall hides the bottom of whatever stands right behind it.
   * The exit on the right leads to the elevator hall (ExitZone -> elevator_hall.tscn).
   * A severed power line from the server racks sparks; the one TV it still feeds flickers.
     Work lamps on tripods follow the walkway. Only story props stand alone (CLAUDE.md rule 6);
@@ -27,7 +30,9 @@ import os
 
 from PIL import Image
 
+import interactions
 import pixel_lights
+import scene_parts
 
 
 def _floor_consts(names):
@@ -40,16 +45,20 @@ def _floor_consts(names):
     return out
 
 
-_c = _floor_consts({"PATH", "HALF", "RUG"})
-PATH, HALF, RUG = _c["PATH"], _c["HALF"], _c["RUG"]
+_c = _floor_consts({"PATH", "HALF", "RUG", "FLOOR_BOTTOM", "EXIT_Y"})
+PATH, HALF, RUG, FLOOR_BOTTOM, EXIT_Y = _c["PATH"], _c["HALF"], _c["RUG"], _c["FLOOR_BOTTOM"], _c["EXIT_Y"]
+FLOOR_X = (14, 305)                                      # floor columns between the side walls (native)
+# Wall colliders (native Rect2: x, y, w, h): back wall, left wall, right wall around the exit, front wall
+WALLS = [(0, 0, 320, 64), (0, 0, 14, 240), (306, 0, 14, EXIT_Y[0]), (306, EXIT_Y[1] + 1, 14, 240 - EXIT_Y[1] - 1),
+         (0, FLOOR_BOTTOM + 1, 320, 240 - FLOOR_BOTTOM - 1)]
 
 S = 3                                                    # environment scale
+PILES = ("dg_e_", "dg_c_")                               # heaps pushed against the walls: their edges may tuck behind
 CHUTE = (480, 330)
 SPAWN = (480, 440)
 WALK = [(x * S, y * S) for x, y in PATH]
 WALK_CLEAR = HALF * S + 18                               # half width that must stay free of colliders
 RUG_RECT = tuple(v * S for v in RUG)
-ROOM = (42, 192, 918, 720)
 
 C, O, D = "code", "organic", "digital"
 # (folder, file, x, y, reason, extra)  - x, y = base line centre
@@ -68,33 +77,58 @@ PLAN = [
     (D, "dg_e_5", 708, 272, "back wall: overflow of the deletion heap", {}),
     (D, "dg_c_small2", 118, 336, "back-left: deprecated audio drivers sorting corner", {}),
     (D, "dg_t_amp_tower", 178, 412, "back-left: .wav drivers somebody stacked by type, now leaning, about to topple", {}),
-    (D, "dg_e_0", 95, 300, "back-left corner fill", {}),
-    (D, "dg_e_1", 52, 438, "left wall: compressed archives (.zip) of deleted storage", {}),
-    (D, "dg_e_3", 70, 566, "left wall: compressed archives (.zip) of deleted storage", {}),
-    (D, "dg_a_meme_fine", 158, 640, "a corner where a tiny burning room keeps saying everything is fine (an unhandled error)",
+    (D, "dg_e_0", 159, 300, "back-left corner fill, pushed into the corner (its edge tucks behind the left wall)", {}),
+    (D, "dg_e_1", 144, 438, "left wall: compressed archives (.zip) of deleted storage, pushed against the wall", {}),
+    (D, "dg_e_3", 135, 504, "left wall: compressed archives (.zip) of deleted storage, pushed against the wall", {}),
+    (D, "dg_a_meme_fine", 159, 576, "a corner where a tiny burning room keeps saying everything is fine (an unhandled error)",
      {"frames": 4, "fps": 8}),
-    (D, "dg_e_7", 58, 692, "left wall: storage junk", {}),
-    (D, "dg_c_ridge", 250, 745, "pushed aside when the walkway was cleared (south side)", {}),
-    (D, "dg_t_crates", 470, 690, "archives shoved off the walkway, slumped against each other", {}),
+    (D, "dg_c_ridge", 246, 681,
+     "pushed aside when the walkway was cleared (south side), banked up against the front wall that hides its foot", {}),
+    (D, "dg_t_crates", 471, 681, "archives shoved off the walkway against the front wall, slumped against each other", {}),
     (D, "dg_c_small1", 790, 380, "back-right: legacy servers and dead displays", {}),
-    (D, "dg_e_9", 902, 322, "back-right corner fill", {}),
+    (D, "dg_e_9", 813, 321, "back-right corner fill, pushed into the corner (its edge tucks behind the right wall)", {}),
     (D, "dg_t_barrel_tv", 700, 420, "a display left on a bit bucket, still powered", {}),
-    (D, "dg_c_mid", 800, 752, "front-right: leftovers of a virtual stage", {}),
-    (D, "dg_t_rack_monitor", 615, 708, "a legacy server fallen onto a pallet waiting for the next collection", {}),
-    (D, "dg_e_8", 545, 750, "front wall: overflow", {}),
-    (D, "dg_e_10", 918, 735, "right wall below the exit", {}),
-    (O, "org_android_lying", 360, 560, "a deprecated avatar pushed off the walkway, lying on its back", {}),
-    (D, "dg_s_gcbot", 868, 392, "the garbage collector, parked by the exit between collection cycles - the room's threat", {}),
+    (D, "dg_z_stage_1", 738, 681, "front-right: leftovers of a virtual stage, a dismantled stage set against the front "
+     "wall below the exit (the wall hides its foot); low enough not to cover the walkway's last stretch", {}),
+    (D, "dg_t_rack_monitor", 615, 681,
+     "a legacy server fallen onto a pallet against the front wall, waiting for the next collection", {}),
+    (O, "org_android_lying", 366, 534, "a deprecated avatar pushed off the walkway, lying on its back on the ridge's shoulder "
+     "(high enough that its head and chest show over the ridge; lower down the ridge swallowed it whole)", {}),
+    (D, "dg_a_gcbot", 858, 392, "the garbage collector, parked by the exit between collection cycles - the room's threat; "
+     "its eye breathes like a sleep light (asleep, not dead)", {"frames": 8, "fps": 4}),
     # 2. the one live power line (animated): the only screens / LEDs / sparks still on in the room
     (D, "dg_a_rack", 652, 356, "a legacy server leaning on the heap; a few status lights still blink", {"frames": 6, "fps": 5}),
-    (D, "dg_a_spark", 612, 456, "severed power line from the servers, sparking at the walkway edge", {"frames": 8, "fps": 10}),
-    (D, "dg_a_tv", 268, 470, "a display on the same line, knocked onto scrap, still flickering an error", {"frames": 6, "fps": 6}),
+    (D, "dg_a_spark", 612, 456, "severed power line from the servers, sparking at the walkway edge",
+     {"flashes": True, "frames": 8, "fps": 10, "sound": "spark", "sound_on": [0], "sound_db": -16}),   # crackles with the biggest burst
+    (D, "dg_a_tv", 294, 471, "a display on the same line, knocked onto scrap, still flickering an error",
+     {"flashes": True, "frames": 6, "fps": 6}),
     # 3. work lamps: whoever cleared the walkway set up caged bulbs on tripods along its north edge
     #    (the crew's tools, set up on purpose - the only things standing upright)
     (D, "dg_s_worklamp", 669, 459, "work lamp at the walkway's first stretch, next to the sparking line it was plugged into",
      {"id": "lamp_a"}),
     (D, "dg_s_worklamp", 792, 408, "work lamp on the last stretch before the exit, in front of the server corner", {"id": "lamp_b"}),
 ]
+# What SeeU finds when she examines the story props (draft lines - docs/WORLD_PROPS.md 9). Keyed by file name.
+EXAMINE = {
+    "dg_s_dialog_404": ["금이 간 오류 창이다.", "'404 — Voice Not Found.'", "나와 같이 떨어진 것 같다."],
+    "dg_s_softbox": ["낡은 소프트웨어 상자.", "표지에 커다랗게 찍혀 있다. EOL — 판매 종료."],
+    "dg_f_home": ["발매트에 주소가 적혀 있다. 127.0.0.1.", "집만 한 곳은 없다."],
+    "dg_s_recycle": ["쓰러진 휴지통. 구겨진 파일들이 쏟아져 나와 있다."],
+    "org_android_sit": ["고개를 떨군 채 앉아 있는 아바타.", "판매가 끝난 모델 같다. 대답이 없다."],
+    "org_android_lying": ["고물 둔덕에 반쯤 묻혀 누운 아바타.", "길을 치울 때 밀려난 것 같다."],
+    "dg_a_gcbot": ["멈춰 선 청소 로봇. 등판에 GC라고 적혀 있다.", "지금은 잠들어 있다. 언젠가 다시 움직일 것이다."],
+    "dg_a_meme_fine": ["작은 방 하나가 불타고 있다.", "안에서 누군가 '괜찮아'라고 중얼거린다."],
+    "dg_a_tv": ["끊어진 전선에 아직 매달린 화면.", "같은 오류만 깜빡이고 있다."],
+    "dg_t_barrel_tv": ["비트 버킷 위에 놓인 화면.", "아직 전원이 들어와 있다. 아무것도 비추지 않는다."],
+    "dg_a_spark": ["끊어진 전선에서 불꽃이 튄다.", "서버들로 이어진 선이다. 가까이 가지 않는 편이 좋겠다."],
+    "dg_s_worklamp": ["누군가 길을 치우면서 세워 둔 작업등.", "청소 로봇의 작업반이 두고 간 것 같다."],
+    "dg_t_crates": ["벽 쪽으로 밀어 둔 압축 파일 상자들.", "라벨이 바래서 무엇이 들었는지 알 수 없다."],
+    "dg_z_stage_1": ["해체된 가상 무대의 조각.", "한때 누군가 이 위에서 노래했을 것이다."],
+    "dg_a_rack": ["더미에 기댄 오래된 서버.", "상태 등 몇 개가 아직 깜빡인다."],
+    "dg_t_rack_monitor": ["팔레트 위에 쓰러진 서버.", "다음 수거를 기다리는 것 같다."],
+}
+
+ROOM_TONE = ("chute", "the air the deletion chute keeps pulling down - the room breathes")   # quiet background loop (scripts/world/room_tone.gd)
 AMBIENT = (0.46, 0.48, 0.57)                             # dim cool base light; the floor never goes black
 WARM, CYAN = (1.0, 0.80, 0.52), (0.40, 0.92, 0.95)
 # Native px. Prop sources without "at"/"height" sit on the centre of the prop's glowing pixels
@@ -124,13 +158,17 @@ LIGHTS = [
          why="the flickering TV fed by the severed line: its screen throws cyan onto the floor in front of it"),
     dict(name="BarrelTV", type="spot", src="dg_t_barrel_tv", color=CYAN, energy=1.0, radius=34, dir=(0, 1, -0.3),
          angle=150, halo=0.2, halo_r=3, why="the TV left on a drum in the server corner, still powered"),
-    dict(name="MemeFire", type="point", src="dg_a_meme_fine", at=(67.5, 214), height=8.5, color=(1.0, 0.62, 0.30),
-         energy=1.4, radius=40,
+    dict(name="MemeFire", type="point", src="dg_a_meme_fine", at=(67.5, 193), height=8.5, color=(1.0, 0.62, 0.30),
+         energy=1.9, radius=54,
          halo=0.35, halo_r=4, flicker=[1.0, 0.8, 1.0, 0.7],
          why="the little burning room in the corner: its flames light the junk around it (everything is fine)"),
     dict(name="Sparks", type="point", src="dg_a_spark", color=(1.0, 0.88, 0.45), energy=2.6, radius=48, halo=0.6,
          halo_r=5, flicker=[1.0, 0.55, 0.0, 0.0, 1.0, 0.0, 0.55, 0.0],
          why="sparks from the severed power line flash in step with the burst frames"),
+    dict(name="GCSleep", type="point", src="dg_a_gcbot", color=CYAN, energy=0.9, radius=20, halo=0.3, halo_r=2,
+         shadows=False, flicker=[0.0, 0.0, 0.5, 1.0, 1.0, 0.5, 0.0, 0.0],
+         why="the garbage collector's sleep light: a faint cyan breath on its own hull and the floor right in front - "
+             "the room's threat is only asleep (examine: it will move again)"),
 ]
 
 HALL = "res://scenes/world/elevator_hall.tscn"
@@ -187,10 +225,33 @@ def collider(folder, name, x, y, extra):
     return (x - cw / 2, y - ch, x + cw / 2, y)
 
 
+def column_tops(folder, name, extra):
+    """Topmost opaque row of every sprite column (first frame), None for empty columns."""
+    im = Image.open(f"assets/env/basement/{folder}/{name}.png").convert("RGBA")
+    w = im.width // extra.get("frames", 1)
+    a = im.getchannel("A").load()
+    return [next((r for r in range(im.height) if a[c, r] > 0), None) for c in range(w)]
+
+
 def check():
     problems = []
     pts = walk_samples()
     for folder, name, x, y, why, extra in PLAN:
+        # the walls are solid: the footprint stands on the floor, never in a wall or under the front wall
+        sx, sy = snapped(folder, name, x, y, extra)
+        fx0, _fy0, fx1, _fy1 = collider(folder, name, sx, sy, extra)
+        if fx0 < FLOOR_X[0] * S - 0.5 or fx1 > (FLOOR_X[1] + 1) * S + 0.5:
+            problems.append(f"{name}: footprint x {fx0 / S:.0f}..{fx1 / S:.0f} goes into a side wall")
+        if sy > (FLOOR_BOTTOM + 1) * S:
+            problems.append(f"{name}: base y {sy / S:.0f} is past the floor (front wall at {FLOOR_BOTTOM + 1})")
+        # only a pile pushed against a wall may have its edge tucked behind it; anything else shows whole
+        # (a side wall slicing through a robot or a box reads as a crop, not as a wall)
+        if not name.startswith(PILES):
+            cols = [k for k, t in enumerate(column_tops(folder, name, extra)) if t is not None]
+            art_left = sx - len(column_tops(folder, name, extra)) * S / 2
+            ax0, ax1 = art_left + cols[0] * S, art_left + (cols[-1] + 1) * S
+            if ax0 < (FLOOR_X[0] - 2) * S or ax1 > (FLOOR_X[1] + 3) * S:
+                problems.append(f"{name}: art x {ax0 / S:.0f}..{ax1 / S:.0f} is cut by a side wall (only piles may tuck in)")
         if not extra.get("solid", True):
             continue
         x0, y0, x1, y1 = collider(folder, name, x, y, extra)
@@ -199,12 +260,17 @@ def check():
             if math.dist((px, py), (nx, ny)) < WALK_CLEAR:
                 problems.append(f"{name}: blocks the walkway near ({int(px)}, {int(py)})")
                 break
-        # visual: a prop standing IN FRONT of the walkway must not draw over it
-        im = Image.open(f"assets/env/basement/{folder}/{name}.png")
-        sw, sh = im.width / extra.get("frames", 1) * S, im.height * S
-        vx0, vy0, vx1 = x - sw / 2, y - sh, x + sw / 2
+        # visual: a prop standing IN FRONT of the walkway must not draw over it (its real silhouette, column by
+        # column, one art pixel of margin each side)
+        tops = column_tops(folder, name, extra)
+        sh = (Image.open(f"assets/env/basement/{folder}/{name}.png").height) * S
+        left = sx - len(tops) * S / 2
         for px, py in pts:
-            if vx0 - 6 <= px <= vx1 + 6 and vy0 <= py + HALF * S * 0.75 and py < y:
+            if py >= sy:
+                continue
+            c = int((px - left) // S)
+            near = [tops[k] for k in range(c - 2, c + 3) if 0 <= k < len(tops) and tops[k] is not None]
+            if near and sy - sh + min(near) * S <= py + HALF * S * 0.75:
                 problems.append(f"{name}: drawn over the walkway near ({int(px)}, {int(py)})")
                 break
         rx0, ry0, rx1, ry1 = RUG_RECT
@@ -225,27 +291,35 @@ def write_scene():
     L = ["[gd_scene format=3]", "",
          '[ext_resource type="Script" path="res://scripts/world/pixel_lighting.gd" id="lighting_s"]',
          '[ext_resource type="Script" path="res://scripts/world/pixel_light.gd" id="light_s"]',
+         scene_parts.ROOM_TONE_EXT,
+         '[ext_resource type="Script" path="res://scripts/world/chute_drop.gd" id="drop_s"]',
+         '[ext_resource type="Texture2D" path="res://assets/env/basement/digital/dg_drop.png" id="dg_drop"]',
          '[ext_resource type="Script" path="res://scripts/world/pixel_room.gd" id="room_s"]',
          '[ext_resource type="Texture2D" path="res://assets/env/basement/room_floor.png" id="floor"]',
+         '[ext_resource type="Texture2D" path="res://assets/env/basement/room_front.png" id="front"]',
          '[ext_resource type="Script" path="res://scripts/world/pixel_prop.gd" id="prop_s"]',
          '[ext_resource type="Script" path="res://scripts/world/exit_zone.gd" id="exit_s"]',
-         '[ext_resource type="PackedScene" path="res://scenes/characters/player.tscn" id="player"]']
+         '[ext_resource type="PackedScene" path="res://scenes/characters/player.tscn" id="player"]',
+         interactions.EXT]
     L += [f'[ext_resource type="Texture2D" path="res://assets/env/basement/{f}/{n}.png" id="{n}"]' for f, n in files]
     L += ["", '[node name="BasementTest" type="Node2D"]', "y_sort_enabled = true", "",
           "; 2.5D pixel lighting for this map (height buffer + light pass + composite)",
           '[node name="Lighting" type="Node" parent="."]', 'script = ExtResource("lighting_s")',
           f"ambient = Color({AMBIENT[0]}, {AMBIENT[1]}, {AMBIENT[2]}, 1)", "",
+          *scene_parts.room_tone_lines(ROOM_TONE),
+          "; the chute keeps dropping deleted things onto the heap now and then (the recycle bin is never done)",
+          '[node name="ChuteDrop" type="Node2D" parent="."]', f"position = Vector2({CHUTE[0]}, 352)",
+          'script = ExtResource("drop_s")', 'texture = ExtResource("dg_drop")', "",
           '[node name="Room" type="Sprite2D" parent="."]', "z_index = -10", 'texture = ExtResource("floor")',
-          'script = ExtResource("room_s")', ""]
+          'script = ExtResource("room_s")', 'front = ExtResource("front")',
+          "walls = Array[Rect2]([" + ", ".join(f"Rect2({x}, {y}, {w}, {h})" for x, y, w, h in WALLS) + "])", ""]
     for i, (folder, name, x, y, why, extra) in enumerate(PLAN):
-        sx, sy = snapped(folder, name, x, y, extra)
-        L += [f"; {why}", f'[node name="{name}_{i}" type="StaticBody2D" parent="."]', f"position = Vector2({sx:g}, {sy:g})",
-              'script = ExtResource("prop_s")', f'texture = ExtResource("{name}")']
-        if not extra.get("solid", True):
-            L.append("solid = false")
-        if "frames" in extra:
-            L += [f"frames = {extra['frames']}", f"fps = {float(extra['fps'])}"]
-        L.append("")
+        L += scene_parts.prop_lines(f"{name}_{i}", snapped(folder, name, x, y, extra), why, name, extra,
+                                    solid=extra.get("solid", True))
+        if name in EXAMINE:                                  # examinable: an Interactable under the prop
+            im = Image.open(f"assets/env/basement/{folder}/{name}.png")
+            L += interactions.scene_lines(f"{name}_{i}", {"examine": EXAMINE[name]},
+                                          im.width / extra.get("frames", 1) * S, im.height * S)
     L += pixel_lights.scene_lines(LIGHTS, light_props(), ROOM_SOURCES)
     for name, (x, y, w, h), target, spawn, why in EXITS:
         L += [f"; {why}", f'[node name="{name}" type="Area2D" parent="."]',

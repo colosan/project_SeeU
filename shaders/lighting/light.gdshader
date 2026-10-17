@@ -13,6 +13,7 @@ const int KIND_FLOOR = 0;
 const int KIND_FACE = 1;
 const int KIND_CHAR = 2;
 const int KIND_CAP = 3;
+const float CHAR_PEAK = 1.3;                       // brightest light on the character (props may reach 2)
 const int TYPE_POINT = 0;
 const int TYPE_SPOT = 1;
 const int TYPE_BEAM = 2;
@@ -126,8 +127,8 @@ vec3 light_at(ivec2 b, float dither, vec4 g) {
 	}
 	int kd = kind_of(g);
 	if (kd == KIND_CAP) {
-		return ambient * 0.85;                          // wall tops: never lit directly
-	}
+		return vec3(0.0);                               // wall tops are not rendered: like the void, the
+	}                                                   // composite draws the unrendered-space pattern there
 	float h = height_of(g);
 	vec3 P = vec3(float(b.x) + 0.5, float(b.y) + 0.5 + h, h);
 	vec3 N = kd == KIND_FLOOR ? vec3(0.0, 0.0, 1.0) : normalize(vec3(0.0, 1.0, 0.45));
@@ -210,12 +211,13 @@ vec3 light_at(ivec2 b, float dither, vec4 g) {
 	}
 	total = max(total, vec3(g.g));                     // emitters show (at least) their true art colour
 	float m = max(total.r, max(total.g, total.b));
-	return m > 2.0 ? total / m * 2.0 : total;
+	float cap = kd == KIND_CHAR ? CHAR_PEAK : 2.0;     // her pale hair and skin would clip to white under the beam
+	return m > cap ? total / m * cap : total;
 }
 
 vec3 glow_at(ivec2 b, ivec2 wp, float dither, vec4 g) {
-	if (g.a < 0.5) {
-		return vec3(0.0);
+	if (g.a < 0.5 || kind_of(g) == KIND_CAP) {
+		return vec3(0.0);                               // nothing glows in unrendered space
 	}
 	vec2 sp = vec2(b) + 0.5;
 	float drawn_floor_y = sp.y + height_of(g);          // floor line of whatever is drawn here

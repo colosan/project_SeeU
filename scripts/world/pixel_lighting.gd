@@ -191,12 +191,26 @@ func _sync() -> void:
 	_height_vp.canvas_transform = Transform2D(0.0, Vector2.ONE / SCALE, 0.0, Vector2(on))
 	var rem := o - Vector2(on * SCALE)
 	_comp.position = rem
+	_feed_clip()
 	_feed_lights(on)
 	_syncs += 1
 	if _warmup != null and _syncs > 2:
 		_warmup.hide()
 		_warmup.queue_free()
 		_warmup = null
+
+
+## The map's rectangle on screen: the composite paints everything outside it black (the void).
+func _feed_clip() -> void:
+	var clip := Vector4(0.0, 0.0, 1.0, 1.0)
+	var map := get_tree().get_first_node_in_group("map_bounds")
+	if map != null and map.has_method("get_world_rect"):
+		var r: Rect2 = map.get_world_rect()
+		var view := _game_vp.get_visible_rect().size
+		var a := (_game_vp.canvas_transform * r.position) / view
+		var b := (_game_vp.canvas_transform * r.end) / view
+		clip = Vector4(a.x, a.y, b.x, b.y)
+	(_comp.material as ShaderMaterial).set_shader_parameter("clip_rect", clip)
 
 
 func _feed_lights(on: Vector2i) -> void:

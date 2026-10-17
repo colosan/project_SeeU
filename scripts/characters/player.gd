@@ -8,6 +8,12 @@ extends CharacterBody2D
 var facing := "south"
 var _last_axis := Vector2.ZERO
 var _twin: AnimatedSprite2D           # same frames on the lighting height layer (see PixelLighting)
+var _reach: Area2D                    # a box just in front of her: what she could examine or use
+var _target: Interactable
+
+## Where the reach box sits for each facing (screen px from her feet), and its size.
+const REACH := {"south": Vector2(0, 16), "north": Vector2(0, -34), "east": Vector2(30, -8), "west": Vector2(-30, -8)}
+const REACH_SIZE := Vector2(40, 30)
 
 @onready var sprite: AnimatedSprite2D = $Sprite
 @onready var camera: Camera2D = $Camera
@@ -20,7 +26,101 @@ func _ready() -> void:
 	sprite.play("idle_" + facing)
 	if PixelLighting.active_for(self):
 		_add_light_twin()
+	_add_reach()
+	_add_steps()
+	_add_shadow()
 	_apply_camera_limits.call_deferred()
+	get_viewport().size_changed.connect(_apply_camera_limits)   # wider/taller window: re-centre small rooms
+
+
+## Footsteps: a soft scuff (assets/audio/env_step.wav, tools/audio/gen_sfx.py) whenever a walk frame puts a
+## foot down, slightly varied in pitch so a long walk doesn't tick like a clock.
+const STEP_FRAMES := [2, 6]                    # widest stride of the 8-frame walk cycles
+const STEP_DB := -23.0
+var _steps: AudioStreamPlayer
+
+
+## A small contact shadow under her feet, drawn like the props' (3x pixels, the same colour), so she stands on
+## the floor instead of floating over it. Under the sprite, above the floor.
+const SHADOW_ROWS := ["....xxxxxx....", "..xxxxxxxxxx..", "..xxxxxxxxxx..", "....xxxxxx...."]
+
+
+func _add_shadow() -> void:
+	var w: int = SHADOW_ROWS[0].length()
+	var img := Image.create(w, SHADOW_ROWS.size(), false, Image.FORMAT_RGBA8)
+	for y in SHADOW_ROWS.size():
+		for x in w:
+			if SHADOW_ROWS[y][x] == "x":
+				img.set_pixel(x, y, Color(0.06, 0.06, 0.06, 0.6))   # pixel_prop.gd SHADOW_COLOR
+	var s := Sprite2D.new()
+	s.name = "Shadow"
+	s.texture = ImageTexture.create_from_image(img)
+	s.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	s.scale = Vector2(3, 3)
+	s.position = Vector2(0, -3)                     # centred on the soles: peeks out evenly around both shoes
+	add_child(s)
+	move_child(s, 0)                               # drawn before (under) the sprite
+
+
+func _add_steps() -> void:
+	if not ResourceLoader.exists("res://assets/audio/env_step.wav"):
+		return
+	_steps = AudioStreamPlayer.new()
+	_steps.stream = load("res://assets/audio/env_step.wav")
+	_steps.volume_db = STEP_DB
+	add_child(_steps)
+	sprite.frame_changed.connect(_on_frame)
+
+
+func _on_frame() -> void:
+	if sprite.animation.begins_with("walk_") and sprite.frame in STEP_FRAMES:
+		_steps.pitch_scale = randf_range(0.88, 1.12)
+		_steps.play()
+
+
+func _exit_tree() -> void:
+	SoundUtil.silence(_steps)
+
+
+func _add_reach() -> void:
+	_reach = Area2D.new()
+	_reach.name = "Reach"
+	_reach.collision_layer = 0
+	_reach.collision_mask = Interactable.LAYER
+	_reach.monitorable = false
+	var shape := RectangleShape2D.new()
+	shape.size = REACH_SIZE
+	var col := CollisionShape2D.new()
+	col.shape = shape
+	_reach.add_child(col)
+	add_child(_reach)
+
+
+## The nearest interactable in front of her, or null.
+func _find_target() -> Interactable:
+	_reach.position = REACH[facing]
+	var best: Interactable = null
+	var best_d := INF
+	for a in _reach.get_overlapping_areas():
+		var it := a as Interactable
+		if it == null:
+			continue
+		var d := it.global_position.distance_squared_to(_reach.global_position)
+		if it.action != &"":                     # something to use (the call box) beats something to look at
+			d -= 1e9                             # (the stool under it) when both are in reach
+		if d < best_d:
+			best = it
+			best_d = d
+	return best
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("interact", false, true) and not event.is_echo() and Game.can_move() \
+			and _target != null and not scripted:
+		get_viewport().set_input_as_handled()
+		sprite.play("idle_" + facing)
+		Game.set_hint("")
+		_target.interact()
 
 
 ## Her sprite is 1:1 screen px, so heights are (feet line - y) / 3 native px.
@@ -62,12 +162,19 @@ func refresh_camera() -> void:
 
 
 ## Keep the camera inside the current map so the void past its edge never shows.
+## A map smaller than the view is centred in it instead (void shows evenly around it).
 ## Safe to call again whenever the map changes.
 func _apply_camera_limits() -> void:
 	var map := get_tree().get_first_node_in_group("map_bounds")
 	if map == null:
 		return
 	var r: Rect2 = map.get_world_rect()
+	var view := get_viewport_rect().size
+	# Grow by whole native pixels on each side so the art stays on the screen's 3 px grid.
+	var step := float(PixelLighting.SCALE)
+	var pad := ((view - r.size).max(Vector2.ZERO) / (2.0 * step)).floor() * step
+	r = r.grow_individual(pad.x, pad.y, view.x - r.size.x - pad.x if pad.x > 0 else 0.0,
+		view.y - r.size.y - pad.y if pad.y > 0 else 0.0)
 	camera.limit_left = int(r.position.x)
 	camera.limit_top = int(r.position.y)
 	camera.limit_right = int(r.end.x)
@@ -75,7 +182,33 @@ func _apply_camera_limits() -> void:
 	camera.reset_smoothing()
 
 
+## A scripted walk (cutscenes, the elevator ride): straight to `to` at walking speed, ignoring walls and input.
+## Returns when she is there; she stays scripted (frozen in place) until `scripted` is set false again.
+var scripted := false
+
+
+func walk_to(to: Vector2) -> void:
+	scripted = true
+	var d := to - global_position
+	if d.length() < 1.0:
+		return
+	facing = _direction_name(d)
+	sprite.play("walk_" + facing)
+	var tw := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)   # physics ticks: interpolation stays smooth
+	tw.tween_property(self, "global_position", to, d.length() / speed)
+	await tw.finished
+	sprite.play("idle_" + facing)
+
+
 func _physics_process(_delta: float) -> void:
+	if scripted:
+		return
+	if not Game.can_move():                    # talking, a panel open, or a map changing
+		velocity = Vector2.ZERO
+		sprite.play("idle_" + facing)
+		return
+	_target = _find_target()
+	Game.set_hint(_target.prompt if _target != null else "")
 	var dir := _read_direction()
 	velocity = dir * speed
 	move_and_slide()

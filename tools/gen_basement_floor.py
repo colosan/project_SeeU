@@ -1,5 +1,9 @@
 """Draws the basement test room floor/walls at native 320x240 (shown at 3x in game).
-Hand-made flat art: no AI generation. Run: python tools/gen_basement_floor.py"""
+Hand-made flat art: no AI generation. Run: python tools/gen_basement_floor.py
+
+The side walls and the front (south) wall are real, solid walls with depth: their tops are drawn again on
+their own layer (room_front.png) over everything in the room, so junk pushed against them is partly hidden
+behind them instead of poking through. The front wall hides the bottom FRONT_H rows of the floor."""
 import os
 import random
 import sys
@@ -11,24 +15,28 @@ from pix import KIND_CAP, KIND_FACE, KIND_FLOOR, save_height_map  # noqa: E402
 
 random.seed(3)
 W, H = 320, 240
+FLOOR_BOTTOM = 227                # last floor row; the front wall stands south of it
+FRONT_TOP = 204                   # first row of the front wall's top as seen (it hides floor rows 204..227)
+EXIT_Y = (120, 175)               # opening in the right wall
 VOID, WALL_TOP, WALL, EDGE = (14, 14, 14), (24, 24, 25), (34, 34, 35), (88, 86, 82)
 FLOOR, SEAM, SPECK = (46, 46, 46), (41, 41, 41), (56, 56, 55)
 
 im = Image.new('RGBA', (W, H), VOID + (255,))
 d = ImageDraw.Draw(im)
-d.rectangle((14, 64, W - 15, H - 1), fill=FLOOR)
+d.rectangle((14, 64, W - 15, FLOOR_BOTTOM), fill=FLOOR)
 for x in range(14 + 32, W - 15, 32):          # large floor panels: 32 native px = 96 screen px
-    d.line((x, 64, x, H - 1), fill=SEAM)
-for y in range(64 + 32, H, 32):
+    d.line((x, 64, x, FLOOR_BOTTOM), fill=SEAM)
+for y in range(64 + 32, FLOOR_BOTTOM, 32):
     d.line((14, y, W - 15, y), fill=SEAM)
 for _ in range(60):
-    d.point((random.randint(16, W - 18), random.randint(66, H - 2)), fill=SPECK)
+    d.point((random.randint(16, W - 18), random.randint(66, FLOOR_BOTTOM - 1)), fill=SPECK)
 d.rectangle((0, 0, W - 1, 39), fill=WALL_TOP)             # back wall top
 d.rectangle((14, 40, W - 15, 63), fill=WALL)              # back wall face
 d.line((14, 40, W - 15, 40), fill=EDGE)
 d.rectangle((0, 0, 13, H - 1), fill=WALL_TOP); d.line((13, 40, 13, H - 1), fill=EDGE)
 d.rectangle((W - 14, 0, W - 1, H - 1), fill=WALL_TOP); d.line((W - 15, 40, W - 15, H - 1), fill=EDGE)
-d.rectangle((W - 15, 120, W - 1, 175), fill=FLOOR)        # exit on the right
+d.rectangle((0, FLOOR_BOTTOM + 1, W - 1, H - 1), fill=WALL_TOP)   # front wall (its top is also on the front layer)
+d.rectangle((W - 15, EXIT_Y[0], W - 1, EXIT_Y[1]), fill=FLOOR)   # exit on the right
 d.rectangle((150, 0, 169, 30), fill=WALL); d.rectangle((146, 30, 173, 35), fill=EDGE)  # ceiling chute
 
 # --- cleared walkway from the rug to the exit (native px), with faded hazard dashes on both sides
@@ -53,7 +61,7 @@ def in_walk(x, y):
     return any(((x - px) / HALF) ** 2 + ((y - py) / (HALF * 0.75)) ** 2 <= 1 for px, py in pts[::2])
 
 
-mask = {(x, y) for x in range(14, W - 1) for y in range(64, H) if in_walk(x, y)}
+mask = {(x, y) for x in range(14, W - 1) for y in range(64, FLOOR_BOTTOM + 1) if in_walk(x, y)}
 TRACK, BERM_D, BERM_L = (52, 52, 50), (36, 36, 36), (74, 72, 68)
 for x, y in mask:                                          # swept floor: cleaner and a bit lighter than the rest
     d.point((x, y), fill=WALK_FLOOR)
@@ -92,6 +100,11 @@ for hx, hy, hw in ((x0 + 8, y1 - 6, 3), (x1 - 12, y0 + 7, 2)):   # worn holes sh
     d.rectangle((hx, hy, hx + hw, hy + 1), fill=FLOOR)
 d.rectangle((x1 - 6, y1 - 4, x1, y1), fill=WALK)           # one corner folded/missing
 
+# --- doorway sill across the exit, flush with the wall's inner face: the wall tops are unrendered (void dots),
+#     so without it the opening reads as a missing tile instead of a door through a thick wall
+d = ImageDraw.Draw(im)
+d.line((W - 15, EXIT_Y[0], W - 15, EXIT_Y[1]), fill=EDGE)
+d.line((W - 14, EXIT_Y[0], W - 14, EXIT_Y[1]), fill=BERM_D)
 im.save('assets/env/basement/room_floor.png')
 print('saved assets/env/basement/room_floor.png')
 
@@ -101,9 +114,9 @@ WALL_H = WALL_BASE - WALL_TOP_Y                     # 24 px (~1.1 m) visible fac
 
 
 def cell(x, y):
-    if 14 <= x <= W - 15 and y >= WALL_BASE:
+    if 14 <= x <= W - 15 and WALL_BASE <= y <= FLOOR_BOTTOM:
         return 0, KIND_FLOOR                            # floor (rug, walkway and seams are all flat)
-    if x >= W - 15 and 120 <= y <= 175:
+    if x >= W - 15 and EXIT_Y[0] <= y <= EXIT_Y[1]:
         return 0, KIND_FLOOR                            # exit opening in the right wall
     if 14 <= x <= W - 15 and WALL_TOP_Y <= y < WALL_BASE:
         return WALL_BASE - y, KIND_FACE                 # back wall face: height above its base
@@ -112,3 +125,35 @@ def cell(x, y):
 
 save_height_map('assets/env/basement/room_floor.height.png', W, H, cell)
 print('saved assets/env/basement/room_floor.height.png')
+
+
+# --- the walls' tops again, on their own layer drawn over the room's contents (pixel_room.gd `front`):
+#     left wall, right wall (open at the exit) and the front wall, which also hides FRONT_H floor rows
+FRONT_H = FLOOR_BOTTOM + 1 - FRONT_TOP              # 24 px (~1.1 m), as tall as the back wall's face
+
+
+def in_front_layer(x, y):
+    if y >= FRONT_TOP:
+        return True                                     # front wall
+    if y < WALL_TOP_Y:
+        return False                                    # the back wall's top stays behind things standing at it
+    if x <= 13:
+        return True                                     # left wall
+    return x >= W - 14 and not (EXIT_Y[0] <= y <= EXIT_Y[1])   # right wall, open at the exit
+
+
+front = Image.new('RGBA', (W, H), (0, 0, 0, 0))
+fd = ImageDraw.Draw(front)
+for y in range(H):
+    for x in range(W):
+        if in_front_layer(x, y):
+            front.putpixel((x, y), WALL_TOP + (255,))
+fd.line((13, FRONT_TOP, W - 14, FRONT_TOP), fill=EDGE)                  # inner edges catch the light
+fd.line((13, WALL_TOP_Y, 13, FRONT_TOP), fill=EDGE)
+fd.line((W - 14, WALL_TOP_Y, W - 14, EXIT_Y[0] - 1), fill=EDGE)
+fd.line((W - 14, EXIT_Y[1] + 1, W - 14, FRONT_TOP), fill=EDGE)
+front.save('assets/env/basement/room_front.png')
+print('saved assets/env/basement/room_front.png')
+save_height_map('assets/env/basement/room_front.height.png', W, H,
+                lambda x, y: (FRONT_H if y >= FRONT_TOP else WALL_H, KIND_CAP) if in_front_layer(x, y) else None)
+print('saved assets/env/basement/room_front.height.png')

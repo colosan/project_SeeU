@@ -42,9 +42,12 @@ FILES = {
     # caged work bulb hanging in the shaft frame (gen_elevator.elevator: ellipse at 35.5, 8.5 inside x 32..39, y 5..12);
     # the floor dial is also shell 4 but it is a painted dial, not a lamp
     "elevator/elevator.png": {"add": BULB, "region": (32, 5, 39, 12)},
+    "elevator/a_elevator.png": {"add": BULB, "region": (32, 5, 39, 12)},      # same bulb in every gate frame
     "elevator/wall_lamp.png": {"add": BULB},                                 # only the bulb uses shell
     "elevator/a_lamp.png": {"add": {**BULB, ("shell", 2): 0.45}},           # LAMP_DIM frame glows weakly, LAMP_OFF is plastic
     "elevator/notice.png": {"generic": False},                              # the glow line is printed on paper
+    "elevator/f_guide.png": {"add": {("warn", 4): 1.0, ("warn", 3): 0.75}},  # floor guide light: the amber lens
+    "elevator/a_guide.png": {"add": {("warn", 4): 1.0, ("warn", 3): 0.75, ("warn", 2): 0.4, ("warn", 1): 0.25}},
     "basement/code/a_rack.png": {"add": {("redp", 4): 1.0}},                # red status LEDs when on (glow ones are generic)
     "basement/code/s_worklamp.png": {"add": BULB},                          # caged work bulb on its stand
     "basement/digital/dg_s_worklamp.png": {"add": BULB},                    # same lamp in the virtual-world set
@@ -60,6 +63,7 @@ STORY_EMITTERS = {
         "dg_t_barrel_tv.png": "the display left on the bit bucket, still powered",
         "dg_a_rack.png": "a legacy server whose few status LEDs still blink (dim)",
         "dg_a_meme_fine.png": "the little burning room: only the flame tips (spark ramp) glow",
+        "dg_a_gcbot.png": "the garbage collector's sensor eye breathing like a sleep light: asleep, not dead",
     },
 }
 

@@ -1386,9 +1386,10 @@ def captcha_panel(p, x, y, r):
     return (x, top - d, x + w - 1, y), w
 
 
-def gc_robot(p, x, y, r):
+def gc_robot(p, x, y, r, eye=1):
     """Garbage-collector robot, deactivated: tracked base, hopper full of deleted files, 'GC'
-    stencil, sweeper arm slumped to the floor, eye dark."""
+    stencil, sweeper arm slumped to the floor, eye dark (eye = glow step of the sensor eye: 1 = off,
+    higher = the sleep light breathing, see dg_a_gcbot)."""
     bx_ = x + 6
     p.rect(bx_, y - 3, bx_ + 19, y, "rubber", 1)                           # tracks
     p.hline(bx_, bx_ + 19, y - 3, "rubber", 2)
@@ -1408,7 +1409,9 @@ def gc_robot(p, x, y, r):
     p.ellipse(bx_ + 15, y - 18, 3.2, 2.8, "shell", 3)                       # sensor dome
     p.ellipse(bx_ + 14, y - 19, 1.2, 1, "shell", 4)
     p.hline(bx_ + 13, bx_ + 17, y - 17, "plastic", 1)
-    p.put(bx_ + 14, y - 17, "glow", 1)                                     # eye: off
+    p.put(bx_ + 14, y - 17, "glow", eye)                                   # eye: off, or the sleep light
+    if eye >= 3:
+        p.put(bx_ + 15, y - 17, "glow", eye - 1)
     p.vline(bx_ + 17, y - 23, y - 21, "steel", 2); p.put(bx_ + 17, y - 24, "redp", 2)   # antenna, LED off
     line(p, bx_, y - 11, bx_ - 3, y - 4, "steel", 2)                        # slumped sweeper arm
     line(p, bx_ + 1, y - 11, bx_ - 2, y - 4, "steel", 3)
@@ -2137,6 +2140,47 @@ def dumped_gcbot(seed=11, angle=5):
     return p.bbox_crop()
 
 
+def chute_drops():
+    """Small things the deletion chute drops onto the heap now and then (scripts/world/chute_drop.gd): a folder,
+    a file sheet with a folded corner, a zipped archive - one per frame, picked at random, never animated."""
+    frames = []
+    for kind in ("folder", "file", "zip"):
+        p = DPix(12, 12)
+        if kind == "folder":
+            folder_icon(p, 1, 10, None, w=10, h=8)
+        elif kind == "file":
+            p.rect(2, 1, 8, 10, "paper", 3); p.hline(2, 6, 1, "paper", 4); p.vline(2, 1, 10, "paper", 4)
+            p.rect(7, 1, 8, 2, "paper", 1); p.put(7, 2, "paper", 2)              # folded corner
+            for ly in (4, 6, 8):
+                p.hline(3, 7 if ly != 8 else 5, ly, "paper", 1)                  # lines of text
+        else:
+            box(p, 1, 10, 9, 2, 6, "card", front=2, top=3)
+            for zy in range(3, 10):
+                p.put(5, zy, "steel", 3 if zy % 2 else 1)                         # the zipper
+        p.outline()
+        frames.append(p)
+    return anim_strip(frames)
+
+
+GC_BREATH = [1, 1, 2, 3, 3, 2, 1, 1]          # sleep light: 8 frames at 4 fps = one slow breath in 2 s
+
+
+def dg_gcbot_sleeping(seed=11, angle=5):
+    """The parked garbage collector of dumped_gcbot, its sensor eye breathing like a sleep light: asleep,
+    not dead - it will move again (8 frames, GC_BREATH)."""
+    frames = []
+    for lv in GC_BREATH:
+        q, ct, r = _settle(gc_robot, seed, angle, labels=True, eye=lv)
+        p = DPix(80, 60)
+        X, Y = 64, 54
+        L, _R = _span(q, ct, X)
+        debris_skirt(p, L - 4, L + 11, Y, 4, r)
+        paste_at(p, q, ct, X, Y)
+        p.outline()
+        frames.append(p)
+    return anim_strip(frames, crop=True)
+
+
 def dg_tv(seed, angle=13):
     """Error-dialog CRT knocked onto a lump of scrap, its screen still flickering (6 frames, same
     brightness pattern as a_tv). The only screen in the room besides the one on the bit bucket."""
@@ -2193,7 +2237,7 @@ def dg_rack(seed, angle=-9):
 
 ANIM_INFO = {  # name: (frames, fps, meaning) - used by the integration step and the catalog
     "dg_a_spark.png": (8, 10, "severed network trunk sparking"), "dg_a_tv.png": (6, 6, "flickering error-dialog CRT"),
-    "dg_a_rack.png": (6, 5, "legacy server blinking"), "dg_a_fan.png": (4, 12, "cooling fan"),
+    "dg_a_rack.png": (6, 5, "legacy server blinking"), "dg_a_gcbot.png": (8, 4, "garbage collector asleep, eye breathing"), "dg_a_fan.png": (4, 12, "cooling fan"),
     "dg_a_bugs.png": (12, 8, "bugs crawling between cracks"), "dg_a_modem.png": (8, 8, "dial-up modem handshake LEDs"),
     "dg_a_lan.png": (12, 12, "packet running along a coiled LAN cable"), "dg_a_cursor.png": (4, 4, "stuck cursor bobbing"),
     "dg_a_loading.png": (8, 12, "loading ring"), "dg_a_holo.png": (8, 8, "flickering avatar hologram"),
@@ -2267,6 +2311,8 @@ NEW = {  # new digital-native props
     "dg_s_softbox.png": lambda: dumped_softbox(9),
     "dg_s_captcha.png": lambda: dsingle(captcha_panel, 10, w=36, h=44),
     "dg_s_gcbot.png": lambda: dumped_gcbot(11),
+    "dg_a_gcbot.png": lambda: dg_gcbot_sleeping(11),
+    "dg_drop.png": chute_drops,
     "dg_s_parcels.png": lambda: dsingle(parcels, 12, w=60, h=34),
     "dg_s_cache.png": lambda: dsingle(cache_box, 13, w=32, h=30),
     "dg_s_keys_undo.png": lambda: dsingle(keys_undo, 14, w=40, h=24),

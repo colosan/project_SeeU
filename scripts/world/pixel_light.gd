@@ -78,9 +78,18 @@ func _process(delta: float) -> void:
 
 
 ## Energy this frame (flicker applied).
+## "Reduce flicker" (pause menu, Game.reduce_flicker): every flickering light holds its average brightness.
+static var steady := false
+
+
 func current_energy() -> float:
 	if flicker.is_empty():
 		return energy
+	if steady:
+		var sum := 0.0
+		for v in flicker:
+			sum += v
+		return energy * sum / flicker.size()
 	var f := int(_t * flicker_fps)
 	if _prop != null and is_instance_valid(_prop) and "current_frame" in _prop:
 		f = _prop.current_frame

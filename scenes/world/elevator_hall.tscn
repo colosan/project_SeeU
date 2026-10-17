@@ -2,12 +2,15 @@
 
 [ext_resource type="Script" path="res://scripts/world/pixel_room.gd" id="room_s"]
 [ext_resource type="Texture2D" path="res://assets/env/elevator/hall_floor.png" id="floor"]
+[ext_resource type="Texture2D" path="res://assets/env/elevator/hall_front.png" id="front"]
 [ext_resource type="Script" path="res://scripts/world/pixel_prop.gd" id="prop_s"]
 [ext_resource type="Script" path="res://scripts/world/exit_zone.gd" id="exit_s"]
 [ext_resource type="Script" path="res://scripts/world/pixel_lighting.gd" id="lighting_s"]
 [ext_resource type="Script" path="res://scripts/world/pixel_light.gd" id="light_s"]
+[ext_resource type="Script" path="res://scripts/world/room_tone.gd" id="tone_s"]
 [ext_resource type="PackedScene" path="res://scenes/characters/player.tscn" id="player"]
-[ext_resource type="Texture2D" path="res://assets/env/elevator/elevator.png" id="elevator"]
+[ext_resource type="Script" path="res://scripts/world/interactable.gd" id="interact_s"]
+[ext_resource type="Texture2D" path="res://assets/env/elevator/a_elevator.png" id="a_elevator"]
 [ext_resource type="Texture2D" path="res://assets/env/elevator/a_call.png" id="a_call"]
 [ext_resource type="Texture2D" path="res://assets/env/elevator/stool.png" id="stool"]
 [ext_resource type="Texture2D" path="res://assets/env/elevator/wall_lamp.png" id="wall_lamp"]
@@ -19,7 +22,11 @@
 [ext_resource type="Texture2D" path="res://assets/env/basement/code/c_small3.png" id="c_small3"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/code/c_small1.png" id="c_small1"]
 [ext_resource type="Texture2D" path="res://assets/env/basement/code/c_small2.png" id="c_small2"]
+[ext_resource type="Texture2D" path="res://assets/env/elevator/f_guide.png" id="f_guide"]
+[ext_resource type="Texture2D" path="res://assets/env/elevator/a_guide.png" id="a_guide"]
+[ext_resource type="Texture2D" path="res://assets/env/elevator/f_guide_off.png" id="f_guide_off"]
 [ext_resource type="Texture2D" path="res://assets/env/elevator/cart.png" id="cart"]
+[ext_resource type="Texture2D" path="res://assets/env/elevator/a_elevator_gate.png" id="a_elevator_gate"]
 
 [node name="ElevatorHall" type="Node2D"]
 y_sort_enabled = true
@@ -27,20 +34,39 @@ y_sort_enabled = true
 ; 2.5D pixel lighting for this map (height buffer + light pass + composite)
 [node name="Lighting" type="Node" parent="."]
 script = ExtResource("lighting_s")
-ambient = Color(0.35, 0.37, 0.46, 1)
+ambient = Color(0.41, 0.43, 0.52, 1)
+
+; the mains hum of the hall's old fittings - power still runs here
+[node name="RoomTone" type="AudioStreamPlayer" parent="."]
+script = ExtResource("tone_s")
+tone = "hum"
 
 [node name="Room" type="Sprite2D" parent="."]
 z_index = -10
 texture = ExtResource("floor")
 script = ExtResource("room_s")
-walls = Array[Rect2]([Rect2(0, 0, 200, 112), Rect2(200, 0, 120, 88), Rect2(0, 0, 14, 120), Rect2(0, 176, 14, 64), Rect2(306, 0, 14, 240), Rect2(0, 214, 320, 26)])
+front = ExtResource("front")
+walls = Array[Rect2]([Rect2(0, 0, 160, 328), Rect2(160, 0, 160, 88), Rect2(0, 0, 14, 368), Rect2(0, 424, 14, 56), Rect2(306, 0, 14, 480), Rect2(0, 456, 320, 24)])
 
-; freight elevator centred in the alcove at the corridor's end: the alcove walls and the walkway frame it, its shaft frame runs off the top of the map (the way on is up)
-[node name="elevator_0" type="StaticBody2D" parent="."]
-position = Vector2(756, 279)
+; freight elevator centred at the far end of the long corridor: the corridor walls and the walkway frame it, its shaft frame runs off the top of the map (the way on is up). Its frames are the folding gate opening: they play only when she rides (Game._ride), not on a loop
+[node name="a_elevator_0" type="StaticBody2D" parent="." groups=["elevator"]]
+position = Vector2(696, 279)
 script = ExtResource("prop_s")
-texture = ExtResource("elevator")
+texture = ExtResource("a_elevator")
 solid_fraction = 0.06
+overlay = ExtResource("a_elevator_gate")
+frames = 6
+fps = 12.0
+autoplay = false
+sound = "gate"
+sound_frames = PackedInt32Array(1, 3, 5)
+
+[node name="Interact" type="Area2D" parent="a_elevator_0"]
+position = Vector2(0, -69.75)
+script = ExtResource("interact_s")
+size = Vector2(240, 169.5)
+action = &"elevator"
+prompt = "타기"
 
 ; call box right of the gate at hand height (~1.1 m); the pulsing button says the car is waiting
 [node name="a_call_1" type="StaticBody2D" parent="."]
@@ -52,123 +78,363 @@ height_offset = 23
 frames = 6
 fps = 4.0
 
+[node name="Interact" type="Area2D" parent="a_call_1"]
+position = Vector2(0, 22.5)
+script = ExtResource("interact_s")
+size = Vector2(60, 123)
+action = &"elevator"
+prompt = "호출"
+
 ; the operator's stool under the call box, tucked against the right wall, clear of the gate
 [node name="stool_2" type="StaticBody2D" parent="."]
 position = Vector2(888, 303)
 script = ExtResource("prop_s")
 texture = ExtResource("stool")
 
+[node name="Interact" type="Area2D" parent="stool_2"]
+position = Vector2(0, -13.5)
+script = ExtResource("interact_s")
+size = Vector2(60, 57)
+lines = PackedStringArray("호출 버튼 아래 놓인 낡은 의자.", "엘리베이터를 몰던 누군가가 앉던 자리 같다. 지금은 비어 있다.")
+prompt = "조사"
+
 ; first lamp, right by the entrance: the first light you see coming out of the junkyard
 [node name="wall_lamp_3" type="StaticBody2D" parent="."]
-position = Vector2(132, 234)
+position = Vector2(132, 882)
 script = ExtResource("prop_s")
 texture = ExtResource("wall_lamp")
 solid = false
 height_offset = 34
 
-; second lamp halfway down the corridor, an old bulb that flickers
+; second lamp at the corner where the way turns north, an old bulb that flickers
 [node name="a_lamp_4" type="StaticBody2D" parent="."]
-position = Vector2(450, 234)
+position = Vector2(420, 882)
 script = ExtResource("prop_s")
 texture = ExtResource("a_lamp")
 solid = false
 height_offset = 34
 frames = 8
 fps = 8.0
+flashes = true
+sound = "buzz"
+sound_frames = PackedInt32Array(7)
+sound_db = -20.0
 
-; notice board between the lamps at eye level, where people wait; one sheet shows the building floor by floor
+; notice board between the lamps at eye level; one sheet shows the building floor by floor
 [node name="notice_5" type="StaticBody2D" parent="."]
-position = Vector2(276, 258)
+position = Vector2(276, 906)
 script = ExtResource("prop_s")
 texture = ExtResource("notice")
 solid = false
 height_offset = 26
 
+[node name="Interact" type="Area2D" parent="notice_5"]
+position = Vector2(0, 24)
+script = ExtResource("interact_s")
+size = Vector2(108, 138)
+lines = PackedStringArray("층별 안내도.", "위에서부터 PLATINUM, LIVE, FAN, COVER, DEMO.", "맨 아래 칸에는 아무것도 적혀 있지 않다.")
+prompt = "조사"
+
 ; drum set right under the leaking pipe joint (x 119) to catch the drips
 [node name="drum_6" type="StaticBody2D" parent="."]
-position = Vector2(357, 351)
+position = Vector2(357, 999)
 script = ExtResource("prop_s")
 texture = ExtResource("drum")
 
+[node name="Interact" type="Area2D" parent="drum_6"]
+position = Vector2(0, -14.25)
+script = ExtResource("interact_s")
+size = Vector2(66, 58.5)
+lines = PackedStringArray("새는 배관 아래 받쳐 둔 드럼통. 물이 넘치고 있다.")
+prompt = "조사"
+
 ; drop falling from the pipe joint into the drum
 [node name="a_drip_7" type="StaticBody2D" parent="."]
-position = Vector2(357, 303)
+position = Vector2(357, 951)
 script = ExtResource("prop_s")
 texture = ExtResource("a_drip")
 solid = false
 height_offset = 11
 frames = 10
 fps = 10.0
+sound = "drip"
+sound_frames = PackedInt32Array(8)
+sound_db = -15.0
 
 ; water splashed out of the overfull drum
 [node name="f_drip_puddle_8" type="StaticBody2D" parent="."]
-position = Vector2(402, 363)
+position = Vector2(402, 1011)
 script = ExtResource("prop_s")
 texture = ExtResource("f_drip_puddle")
 solid = false
 
 ; junk that spilled through the doorway, pushed against the wall beside the entrance
 [node name="c_small3_9" type="StaticBody2D" parent="."]
-position = Vector2(124.5, 354)
+position = Vector2(124.5, 1002)
 script = ExtResource("prop_s")
 texture = ExtResource("c_small3")
 
-; junk drifted in from the junkyard, swept against the south wall
+; junk swept against the front wall, half hidden behind it (the wall has depth)
 [node name="c_small1_10" type="StaticBody2D" parent="."]
-position = Vector2(276, 636)
+position = Vector2(276, 1344)
 script = ExtResource("prop_s")
 texture = ExtResource("c_small1")
 
-; more swept junk along the south wall, further down the corridor
+; more swept junk along the front wall at the corner, half hidden behind it
 [node name="c_small2_11" type="StaticBody2D" parent="."]
-position = Vector2(547.5, 636)
+position = Vector2(541.5, 1332)
 script = ExtResource("prop_s")
 texture = ExtResource("c_small2")
 
-; flatbed cart with a crate, parked on the open floor south of the elevator, out of the walkway
-[node name="cart_12" type="StaticBody2D" parent="."]
-position = Vector2(786, 618)
+; guide light beside the walkway up the corridor
+[node name="f_guide_12" type="StaticBody2D" parent="."]
+position = Vector2(642, 420)
+script = ExtResource("prop_s")
+texture = ExtResource("f_guide")
+solid = false
+
+; guide light beside the walkway up the corridor
+[node name="f_guide_13" type="StaticBody2D" parent="."]
+position = Vector2(756, 420)
+script = ExtResource("prop_s")
+texture = ExtResource("f_guide")
+solid = false
+
+; guide light beside the walkway up the corridor
+[node name="f_guide_14" type="StaticBody2D" parent="."]
+position = Vector2(642, 555)
+script = ExtResource("prop_s")
+texture = ExtResource("f_guide")
+solid = false
+
+; guide light beside the walkway up the corridor
+[node name="f_guide_15" type="StaticBody2D" parent="."]
+position = Vector2(756, 555)
+script = ExtResource("prop_s")
+texture = ExtResource("f_guide")
+solid = false
+
+; guide light beside the walkway up the corridor
+[node name="f_guide_16" type="StaticBody2D" parent="."]
+position = Vector2(642, 690)
+script = ExtResource("prop_s")
+texture = ExtResource("f_guide")
+solid = false
+
+; guide light beside the walkway up the corridor, flickering
+[node name="a_guide_17" type="StaticBody2D" parent="."]
+position = Vector2(756, 690)
+script = ExtResource("prop_s")
+texture = ExtResource("a_guide")
+solid = false
+frames = 8
+fps = 8.0
+flashes = true
+
+; guide light beside the walkway up the corridor, dead
+[node name="f_guide_off_18" type="StaticBody2D" parent="."]
+position = Vector2(642, 825)
+script = ExtResource("prop_s")
+texture = ExtResource("f_guide_off")
+solid = false
+
+; guide light beside the walkway up the corridor
+[node name="f_guide_19" type="StaticBody2D" parent="."]
+position = Vector2(756, 825)
+script = ExtResource("prop_s")
+texture = ExtResource("f_guide")
+solid = false
+
+; guide light beside the walkway up the corridor
+[node name="f_guide_20" type="StaticBody2D" parent="."]
+position = Vector2(642, 960)
+script = ExtResource("prop_s")
+texture = ExtResource("f_guide")
+solid = false
+
+; guide light beside the walkway up the corridor
+[node name="f_guide_21" type="StaticBody2D" parent="."]
+position = Vector2(756, 960)
+script = ExtResource("prop_s")
+texture = ExtResource("f_guide")
+solid = false
+
+; flatbed cart with a crate, parked against the corridor's right wall halfway up, out of the walkway
+[node name="cart_22" type="StaticBody2D" parent="."]
+position = Vector2(852, 720)
 script = ExtResource("prop_s")
 texture = ExtResource("cart")
 
+[node name="Interact" type="Area2D" parent="cart_22"]
+position = Vector2(0, -22.5)
+script = ExtResource("interact_s")
+size = Vector2(126, 75)
+lines = PackedStringArray("상자를 실은 손수레.", "바퀴 자국이 엘리베이터까지 이어진다.")
+prompt = "조사"
+
 ; first wall lamp right inside the doorway: a warm pool to walk into out of the junkyard
 [node name="EntryLamp" type="Node2D" parent="."]
-position = Vector2(132, 342)
+position = Vector2(132, 1002)
 script = ExtResource("light_s")
-type = 0
+type = 1
 color = Color(1, 0.84, 0.6, 1)
 energy = 2.7
-height = 40.5
+height = 44.5
 radius = 124
+direction = Vector3(0, 1, -0.25)
+angle = 190
 halo = 0.55
 halo_radius = 5
 
-; halfway lamp with an old bulb: the light flickers in step with the bulb's frames
+; lamp at the corner where the way turns north, an old bulb: the light flickers in step with its frames
 [node name="FlickerLamp" type="Node2D" parent="."]
-position = Vector2(450, 342)
+position = Vector2(420, 1002)
 script = ExtResource("light_s")
-type = 0
+type = 1
 color = Color(1, 0.84, 0.6, 1)
 energy = 2.7
-height = 40.5
+height = 44.5
 radius = 124
+direction = Vector3(0, 1, -0.25)
+angle = 190
 halo = 0.55
 halo_radius = 5
 flicker = PackedFloat32Array(1, 1, 1, 1, 0.45, 1, 0, 1)
 flicker_fps = 8
 sync_prop = NodePath("../a_lamp_4")
 
-; caged bulb high in the shaft frame: the brightest light in the hall, it pours down over the gate - the goal
+; caged bulb high in the shaft frame: the brightest light in the hall, it pours down over the gate - the goal. No shadows: it hangs in front of the frame, and the screen-space shadow of the frame on the wall right behind it came out as horizontal stripes on both sides of the elevator
 [node name="ElevatorBulb" type="Node2D" parent="."]
-position = Vector2(756, 282)
+position = Vector2(696, 282)
 script = ExtResource("light_s")
 type = 0
 color = Color(1, 0.88, 0.68, 1)
 energy = 2.6
 height = 85.1
 radius = 170
+casts_shadows = false
 halo = 0.6
 halo_radius = 8
+
+; guide light set in the floor beside the walkway: a warm pool, the next step towards the elevator
+[node name="Guide_214_140" type="Node2D" parent="."]
+position = Vector2(642, 423)
+script = ExtResource("light_s")
+type = 0
+color = Color(1, 0.72, 0.38, 1)
+energy = 1.3
+height = 3
+radius = 30
+casts_shadows = false
+halo = 0.25
+halo_radius = 3
+
+; guide light set in the floor beside the walkway: a warm pool, the next step towards the elevator
+[node name="Guide_252_140" type="Node2D" parent="."]
+position = Vector2(756, 423)
+script = ExtResource("light_s")
+type = 0
+color = Color(1, 0.72, 0.38, 1)
+energy = 1.3
+height = 3
+radius = 30
+casts_shadows = false
+halo = 0.25
+halo_radius = 3
+
+; guide light set in the floor beside the walkway: a warm pool, the next step towards the elevator
+[node name="Guide_214_185" type="Node2D" parent="."]
+position = Vector2(642, 558)
+script = ExtResource("light_s")
+type = 0
+color = Color(1, 0.72, 0.38, 1)
+energy = 1.3
+height = 3
+radius = 30
+casts_shadows = false
+halo = 0.25
+halo_radius = 3
+
+; guide light set in the floor beside the walkway: a warm pool, the next step towards the elevator
+[node name="Guide_252_185" type="Node2D" parent="."]
+position = Vector2(756, 558)
+script = ExtResource("light_s")
+type = 0
+color = Color(1, 0.72, 0.38, 1)
+energy = 1.3
+height = 3
+radius = 30
+casts_shadows = false
+halo = 0.25
+halo_radius = 3
+
+; guide light set in the floor beside the walkway: a warm pool, the next step towards the elevator
+[node name="Guide_214_230" type="Node2D" parent="."]
+position = Vector2(642, 693)
+script = ExtResource("light_s")
+type = 0
+color = Color(1, 0.72, 0.38, 1)
+energy = 1.3
+height = 3
+radius = 30
+casts_shadows = false
+halo = 0.25
+halo_radius = 3
+
+; guide light set in the floor beside the walkway: a warm pool, the next step towards the elevator
+[node name="Guide_252_230" type="Node2D" parent="."]
+position = Vector2(756, 693)
+script = ExtResource("light_s")
+type = 0
+color = Color(1, 0.72, 0.38, 1)
+energy = 1.3
+height = 3
+radius = 30
+casts_shadows = false
+halo = 0.25
+halo_radius = 3
+flicker = PackedFloat32Array(1, 1, 0.5, 1, 1, 0, 1, 0.5)
+flicker_fps = 8
+sync_prop = NodePath("../a_guide_17")
+
+; guide light set in the floor beside the walkway: a warm pool, the next step towards the elevator
+[node name="Guide_252_275" type="Node2D" parent="."]
+position = Vector2(756, 828)
+script = ExtResource("light_s")
+type = 0
+color = Color(1, 0.72, 0.38, 1)
+energy = 1.3
+height = 3
+radius = 30
+casts_shadows = false
+halo = 0.25
+halo_radius = 3
+
+; guide light set in the floor beside the walkway: a warm pool, the next step towards the elevator
+[node name="Guide_214_320" type="Node2D" parent="."]
+position = Vector2(642, 963)
+script = ExtResource("light_s")
+type = 0
+color = Color(1, 0.72, 0.38, 1)
+energy = 1.3
+height = 3
+radius = 30
+casts_shadows = false
+halo = 0.25
+halo_radius = 3
+
+; guide light set in the floor beside the walkway: a warm pool, the next step towards the elevator
+[node name="Guide_252_320" type="Node2D" parent="."]
+position = Vector2(756, 963)
+script = ExtResource("light_s")
+type = 0
+color = Color(1, 0.72, 0.38, 1)
+energy = 1.3
+height = 3
+radius = 30
+casts_shadows = false
+halo = 0.25
+halo_radius = 3
 
 ; the call button pulses cyan: the car is waiting
 [node name="CallGlow" type="Node2D" parent="."]
@@ -187,17 +453,22 @@ sync_prop = NodePath("../a_call_1")
 
 ; back to basement_test.tscn
 [node name="ToBasement" type="Area2D" parent="."]
-position = Vector2(21, 444)
+position = Vector2(21, 1188)
 script = ExtResource("exit_s")
 target_map = "res://scenes/world/basement_test.tscn"
 target_spawn = &"FromElevator"
 size = Vector2(42, 168)
 
-; just inside the entrance, on the walkway, facing down the corridor
+; just inside the entrance, on the walkway, facing along the passage
 [node name="FromBasement" type="Marker2D" parent="."]
-position = Vector2(111, 444)
+position = Vector2(111, 1188)
 metadata/facing = "east"
+
+; one step out of the gate, facing down the corridor: where a ride from another floor lets her out (Game._ride walks her here from inside the car)
+[node name="FromElevator" type="Marker2D" parent="."]
+position = Vector2(696, 318)
+metadata/facing = "south"
 
 ; placed on the entrance spawn when the scene is run on its own; Game moves her on arrival
 [node name="Player" parent="." instance=ExtResource("player")]
-position = Vector2(111, 444)
+position = Vector2(111, 1188)

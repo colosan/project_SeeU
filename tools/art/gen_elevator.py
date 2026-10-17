@@ -15,6 +15,7 @@ import random
 import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
+from PIL import Image  # noqa: E402
 from pix import Pix, box  # noqa: E402
 import gen_junk  # noqa: E402
 
@@ -29,7 +30,12 @@ def line(p, x0, y0, x1, y1, mat, step):
 
 # ---------- the freight elevator (canvas = room x 216..287, y 0..92; base line = room y 93) ----------
 
-def elevator():
+GATE_STEPS = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]    # a_elevator frames: the gate folding open (Game rides play them)
+
+
+def elevator(gate=0.0, with_gate=True):
+    """The freight elevator in its shaft frame. gate = how far the folding gate is pushed open (0 shut .. 1 folded
+    against the left jamb); with_gate=False leaves the gate out (the car seen through an empty doorway)."""
     p = Pix(72, 93)
     # open shaft above the car: it keeps going up through the whole building
     p.rect(7, 0, 64, 29, "plastic", 0)
@@ -98,14 +104,22 @@ def elevator():
 
     # folding scissor gate in front of the car
     p.rect(9, 40, 62, 41, "steel", 3); p.hline(9, 62, 41, "steel", 1)        # top track
-    bars = list(range(10, 59, 6))
-    for a in bars[:-1]:
+    stile = round(60 - 32 * gate)          # leading stile slides left; folded, the 9 bars stand 2 px apart (a bundle, not a slab)
+    if not with_gate:
+        stile, bars = None, []
+    if with_gate:
+        bars = [round(10 + i * (stile - 12) / 8) for i in range(9)]           # 9 bars bunch up as it folds
+    for a, b in zip(bars, bars[1:]):
+        if b - a < 3:                                                     # folded tight: just the bars
+            continue
         for y0 in range(44, 75, 10):                                          # tall scissor diamonds
-            line(p, a, y0, a + 6, y0 + 10, "steel", 2); line(p, a + 6, y0, a, y0 + 10, "steel", 2)
+            line(p, a, y0, b, y0 + 10, "steel", 2); line(p, b, y0, a, y0 + 10, "steel", 2)
+    bunched = len(bars) > 1 and bars[1] - bars[0] < 3
     for bx in bars:
-        p.vline(bx, 42, 85, "steel", 3)
-    p.rect(60, 42, 61, 85, "steel", 3); p.vline(61, 42, 85, "steel", 2)      # leading stile
-    p.rect(58, 59, 59, 64, "rubber", 2); p.put(58, 59, "rubber", 4)           # gate handle
+        p.vline(bx, 42, 85, "steel", 2 if bunched else 3)                    # a folded bundle sits a step darker
+    if with_gate:
+        p.rect(stile, 42, stile + 1, 85, "steel", 3); p.vline(stile + 1, 42, 85, "steel", 2)   # leading stile
+        p.rect(stile - 2, 59, stile - 1, 64, "rubber", 2); p.put(stile - 2, 59, "rubber", 4)   # gate handle
     p.rect(9, 85, 62, 86, "steel", 2); p.hline(9, 62, 85, "steel", 3)        # bottom track
 
     # threshold plate on the floor with a worn hazard lip
@@ -227,6 +241,31 @@ def drip():
     return gen_junk.anim_strip(frames)
 
 
+# floor guide lights: set flush into the concrete along the corridor's walkway, they lead the eye to the
+# elevator (rule 8: the way is shown by light, not arrows). Seen from above: a steel frame, an amber lens.
+GUIDE_ON, GUIDE_DIM, GUIDE_OFF = (("warn", 4), ("warn", 3)), (("warn", 2), ("warn", 1)), (("plastic", 2), ("plastic", 1))
+GUIDE_FLICKER = [GUIDE_ON, GUIDE_ON, GUIDE_DIM, GUIDE_ON, GUIDE_ON, GUIDE_OFF, GUIDE_ON, GUIDE_DIM]   # 8 fps, see layout
+
+
+def floor_light(state=GUIDE_ON):
+    """A guide light flush with the floor: 8x4 steel frame, 6x2 lens (centre line brightest)."""
+    p = Pix(8, 4)
+    p.rect(0, 0, 7, 3, "steel", 1)
+    p.hline(0, 7, 0, "steel", 2)                                           # lit near edge of the frame
+    (cm, cs), (rm, rs) = state
+    p.rect(1, 1, 6, 2, rm, rs)
+    p.hline(2, 5, 1, cm, cs)
+    return p
+
+
+def floor_light_off():
+    return floor_light(GUIDE_OFF)
+
+
+def floor_light_flicker():
+    return gen_junk.anim_strip([floor_light(s) for s in GUIDE_FLICKER])
+
+
 def drip_puddle():
     p = Pix(24, 8)
     p.ellipse(11.5, 3.5, 10.5, 3, "oil", 2)
@@ -235,8 +274,46 @@ def drip_puddle():
     return p
 
 
+def elevator_frames():
+    """The car and frame without the gate, once per gate frame (the prop's frames stay in step with its gate)."""
+    return gen_junk.anim_strip([elevator(0.0, with_gate=False) for _ in GATE_STEPS])
+
+
+def gate_frames():
+    """Only the gate, frame by frame: every pixel where the full elevator differs from the gateless one. Drawn
+    over the car by pixel_prop's `overlay`, so a rider can stand between the car and the gate."""
+    frames = []
+    back = elevator(0.0, with_gate=False).image()
+    for g in GATE_STEPS:
+        full = elevator(g).image()
+        img = Image.new("RGBA", full.size, (0, 0, 0, 0))
+        fp, bp, op = full.load(), back.load(), img.load()
+        for y in range(full.height):
+            for x in range(full.width):
+                if fp[x, y] != bp[x, y]:
+                    op[x, y] = fp[x, y]
+        frames.append(img)
+    w, h = frames[0].size
+    strip = Image.new("RGBA", (w * len(frames), h), (0, 0, 0, 0))
+    for i, f in enumerate(frames):
+        strip.paste(f, (i * w, 0))
+    return _Done(strip)
+
+
+class _Done:
+    """An already finished image, for TARGETS (main() calls .image() on what a target returns)."""
+
+    def __init__(self, img):
+        self.img = img
+
+    def image(self):
+        return self.img
+
+
 TARGETS = {
     "elevator.png": elevator,
+    "a_elevator.png": elevator_frames,
+    "a_elevator_gate.png": gate_frames,
     "a_call.png": call_panel_frames,
     "a_lamp.png": flicker_lamp,
     "wall_lamp.png": wall_lamp,
@@ -246,6 +323,9 @@ TARGETS = {
     "drum.png": drum,
     "a_drip.png": drip,
     "f_drip_puddle.png": drip_puddle,
+    "f_guide.png": floor_light,
+    "f_guide_off.png": floor_light_off,
+    "a_guide.png": floor_light_flicker,
 }
 
 
