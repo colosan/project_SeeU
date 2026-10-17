@@ -47,9 +47,11 @@
 |---|---|---|
 | `assets/env/elevator/hall_floor.png` | 직접 그림, AI 미사용: `tools/gen_elevator_hall_floor.py` | 320x240 원본, 3배 표시. 바닥·벽·배관·바퀴 자국·배수구 |
 | `assets/env/elevator/elevator.png` | 직접 그림, AI 미사용: `tools/art/gen_elevator.py` | 화물 엘리베이터(접이식 철창문, 반원 층 표시기, 갇힌 전구, 위로 이어지는 승강로 기둥) |
+| `assets/env/elevator/a_elevator.png`, `a_elevator_gate.png` | 직접 그림, AI 미사용: `tools/art/gen_elevator.py` | 탑승용 엘리베이터: 문을 뺀 차체 x6, 문만(접히며 열리는 6프레임, 전체 그림과 차체의 차이). 둘을 겹치면 `elevator.png`와 같다 |
 | `assets/env/elevator/a_call.png` | 직접 그림, AI 미사용: `tools/art/gen_elevator.py` | 호출 버튼 깜빡임 6프레임 |
 | `assets/env/elevator/a_lamp.png`, `wall_lamp.png` | 직접 그림, AI 미사용: `tools/art/gen_elevator.py` | 벽등. `a_lamp`는 깜빡이는 8프레임 |
 | `assets/env/elevator/a_drip.png`, `f_drip_puddle.png`, `drum.png` | 직접 그림, AI 미사용: `tools/art/gen_elevator.py` (드럼통은 `gen_junk.barrel` 부품) | 새는 배관 물방울 10프레임, 물웅덩이, 받침 드럼통 |
+| `assets/env/elevator/f_guide.png`, `f_guide_off.png`, `a_guide.png` | 직접 그림, AI 미사용: `tools/art/gen_elevator.py` | 복도 바닥 유도등(켜짐 / 꺼짐 / 깜빡임 8프레임) |
 | `assets/env/elevator/notice.png`, `cart.png`, `stool.png` | 직접 그림, AI 미사용: `tools/art/gen_elevator.py` (수레 위 상자는 `gen_junk.crate` 부품) | 게시판, 평판 수레, 운전수 의자 |
 
 복도 가장자리 고물(`c_small1/2/3`)은 지하 방의 `assets/env/basement/code/` 파일을 그대로 다시 씁니다.
@@ -136,3 +138,23 @@
 
 - PixelLab 이용 약관: https://pixellab.ai/termsofservice
 - 공식 일러스트와 설계도는 생성 레퍼런스로만 쓰고 저장소와 배포본에 넣지 않습니다.
+
+## UI
+
+| 파일 | 출처 | 비고 |
+|---|---|---|
+| `assets/ui/stack_map.png` | PixelLab create_image_pro 2조각(240x540 각각, 구도 기준 = `tools/art/gen_stack_map.py --guide`의 코드 가이드): 위 `393c0220-42b2-4ef9-a006-afb913a1c824`(→ `tools/art/widen_stack_top.py`로 넓힘), 아래 `21c23930-a7a4-4bf1-880d-39236cd3a85e`(→ `--finish`가 하늘색을 이어지게 다시 칠함). 이음매 구름 인페인트 `18e6e544-76e9-405c-8e2a-73c45c26719a` | 왼쪽 패널의 세계 일러스트(세상에서 가장 큰 탑 = 보컬로이드들의 탑: 63빌딩형, 피아노롤 외벽, 계급별 재질 녹슨 철→청동→은→금→백금, 명예의 전당 음반 띠, 구름바다·성층권, 사람·한국어 없음). 원본 조각은 `tools/art/source/`(위는 `stack_top_raw.png`), `gen_stack_map.py --finish`로 이어 붙여 2배(480x2160) |
+| `assets/ui/backdrop_l0.png` | PixelLab create_image_pro `8119aa7a-8f54-4c7c-8552-3f057252f124` (240x540, 스타일 기준 = 탑 아래 조각) | 오른쪽 패널 스탠딩 뒤 L0 배경(고물 매립지 동굴, 슈트의 청록 빛, 사람·글자 없음). 원본 `tools/art/source/backdrop_l0.png`, 2배로 표시 |
+| `assets/ui/icon.png` | 시유 맵 스프라이트(위 PixelLab 캐릭터)의 머리를 잘라 `tools/art/gen_icon.py`로 만듦 | 창·작업 표시줄 아이콘 256x256(64x64를 4배, 패널색 바탕 + 청록 테두리) |
+| `assets/env/basement/room_front.png`, `assets/env/elevator/hall_front.png` | 직접 그림: 각 방의 바닥 생성기, AI 미사용 | 벽 윗면 층(소품 위에 그림): 옆벽·앞벽·막힌 덩어리 |
+| (저장소 밖) `reference/seeu_standing.png` | 15주년 공식 의상 설계도(© SBS A&T, 의상 디자인 CHRIS)의 앞모습을 `tools/art/cut_standing.py`로 잘라냄 | **저장소에 넣지 않음**. 오른쪽 패널 스탠딩으로 이 PC에서만 사용, 배포 전 교체 또는 허락 필요 |
+
+## 소리
+| 파일 | 출처 | 비고 |
+|---|---|---|
+| `assets/audio/ui_move.wav`, `ui_ok.wav`, `ui_cancel.wav`, `ui_deny.wav`, `ui_page.wav` | 직접 합성, 샘플·AI 미사용: `tools/audio/gen_sfx.py` | UI 효과음(커서 이동, 결정, 취소, 잠긴 층 버저, 대사 쪽 넘김). 사각파·삼각파 짧은 소리, 22050Hz 모노 |
+| `assets/audio/env_drip.wav`, `env_spark.wav`, `env_step.wav`, `env_gate.wav` | 직접 합성, 샘플·AI 미사용: `tools/audio/gen_sfx.py` | 방 소리: 드럼통에 떨어지는 물방울, 끊어진 전선의 스파크(소품 애니메이션 프레임에 맞춰 위치 소리로 재생), 시유 발소리, 엘리베이터 철창문 덜컹 |
+| `assets/audio/env_buzz.wav` | 직접 합성, 샘플·AI 미사용: `tools/audio/gen_sfx.py` | 깜빡이던 낡은 전구가 다시 켜질 때의 짧은 전기 소리(엘리베이터 홀 모퉁이 등) |
+| `assets/audio/env_thud.wav` | 직접 합성, 샘플·AI 미사용: `tools/audio/gen_sfx.py` | 슈트가 떨어뜨린 것이 더미에 떨어지는 둔탁한 소리 |
+| `assets/audio/env_lift.wav`, `env_bell.wav` | 직접 합성, 샘플·AI 미사용: `tools/audio/gen_sfx.py` | 엘리베이터 운행: 모터가 돌다 멎는 소리(1.6초, 층 사이 페이드 동안), 도착 종소리 |
+| `assets/audio/tone_chute.wav`, `tone_hum.wav` | 직접 합성, 샘플·AI 미사용: `tools/audio/gen_sfx.py` | 방 바탕 소리(이음매 없는 반복): 지하 슈트 공기 8초, 엘리베이터 홀 전원 험 4초 |
