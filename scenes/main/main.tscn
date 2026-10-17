@@ -1,7 +1,9 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/map_host.gd" id="1_host"]
-[ext_resource type="PackedScene" path="res://scenes/ui/side_panel.tscn" id="2_panel"]
+[ext_resource type="PackedScene" path="res://scenes/ui/map_panel.tscn" id="2_map"]
+[ext_resource type="PackedScene" path="res://scenes/ui/info_panel.tscn" id="3_info"]
+[ext_resource type="Script" path="res://scripts/ui/view_frame.gd" id="4_frame"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -20,23 +22,33 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 0
 
+[node name="MapPanel" parent="Layout" instance=ExtResource("2_map")]
+layout_mode = 2
+
 [node name="GameView" type="SubViewportContainer" parent="Layout"]
+process_mode = 3
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_stretch_ratio = 3.0
 stretch = true
 
 [node name="Viewport" type="SubViewport" parent="Layout/GameView"]
+audio_listener_enable_2d = true
 handle_input_locally = false
 snap_2d_transforms_to_pixel = true
 canvas_item_default_texture_filter = 0
-size = Vector2i(960, 720)
+size = Vector2i(1080, 1080)
 render_target_update_mode = 4
 
 [node name="MapHost" type="Node2D" parent="Layout/GameView/Viewport"]
+process_mode = 1
 script = ExtResource("1_host")
 initial_map = "res://scenes/world/basement_test.tscn"
 
-[node name="SidePanel" parent="Layout" instance=ExtResource("2_panel")]
+[node name="InfoPanel" parent="Layout" instance=ExtResource("3_info")]
 layout_mode = 2
-size_flags_horizontal = 3
+
+[node name="ViewFrame" type="Control" parent="."]
+layout_mode = 0
+mouse_filter = 2
+script = ExtResource("4_frame")
+target = NodePath("../Layout/GameView")
